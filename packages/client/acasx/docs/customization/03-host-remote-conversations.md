@@ -74,6 +74,20 @@ demo 阶段业务树用组件内 mock，会话接入真实 dsh 数据的方式�
 
 这套组合的已知成本与遗留：`cwd` 反推会话归属是临时方案，业务阶段要换成自有存储映射并预留 `ownerId`；双面包要同时挂 host/client 两个 tsconfig，漏一处 Typert 就生成不出 Remote 产物；自挂载命名空间让客户端多一层 `$mount` 与 dispose 生命周期。
 
+### 为什么不用 sessionId 编码对话类型
+
+一个自然的想法是：创建会话时把类型名拼进 `sessionId`，之后从 id 就能区分。这个做法技术上可行——`SessionCreateRequest.sessionId?` 确实存在，`session.create` 的语义是「不存在就新建、存在就幂等认领」（`packages/api/session-controller/src/commands.ts` 与 `agent.ts` 的 `createOrAdopt`）。但它不能替代现在的方案，原因有四条。
+
+**id 必须唯一，类型名不唯一。** 同一个对话类型会有很多会话，还会跨多个罪犯；只拼类型名会命中「认领」分支，第二次创建不再新建，而是复用同一个会话，cwd 或 preset 不一致时直接抛 `ApiSessionCwdConflict` / `assertPresetUnchanged`。要保证唯一就得再加随机或业务后缀，这时类型段只剩可读性，判定还是得走别的字段。
+
+**id 里的类型段表达不了归属。** 一个场景会话需要三样东西：能力组合、工作目录与 Workspace 归属、侧栏里的分组位置。id 里的类型名最多替代第一样，给不了后两样，所以 `resolveScenarioWorkspace → workspaces.create → session.create({ workspaceId, agentPreset })` 这条链路一个也省不掉，等于多出一份冗余真相源。
+
+**类型已经是官方的一等字段。** `session.create({ agentPreset })` 把类型写进会话 header 与 `agentPreset` projection（`agentPresetProjectionDefinition`），客户端直接读 `projectionValues.agentPreset`，Host 侧 `presetForSession` 与 `presets.acquireScope(agentPreset)` 也用它做能力隔离。类型区分本来就由这个字段承担，不需要借 id。
+
+**id 是持久化身份，类型和显示名都会变。** `sessionId` 经 `encodeSegment` 直接进入持久化目录与日志路径，还出现在 header、fork 的 parent/child 引用和 Remote 报文里。把业务类型编进 id 等于改身份格式，要按持久化格式变更对待；而罪犯姓名、场景名是可变的业务字段，改名后 id 要么过时、要么得重写。这与「业务分类不进 `SessionHeader`」是同一条理由。
+
+结论：如果只是想要运维可读的前缀（例如 `acasx-<scenario-slug>-<uuid>`），可以做，但判定逻辑仍必须走 `agentPreset` 与自有映射，并且要接受它成为不易更改的持久化命名。真正要按会话区分业务归属，正确做法是自有存储里的 `sessionId → (罪犯, 场景)` 映射，而不是把归属编进身份。
+
 ## 改动文件（上游侵入清单）
 
 | 文件 | 改动 |
