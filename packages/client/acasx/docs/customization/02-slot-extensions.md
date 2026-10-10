@@ -24,6 +24,27 @@ kind: 'customization-note'
 - 不改服务、不改类型之外的数据结构、不改持久化格式，占用方通过既有的 `ctx.slots.inject` 注册。
 - 默认渲染留在上游，产品只提供替换内容；上游升级 hero 结构时，冲突集中在 `renderSlot` 调用点。
 
+## 候选方案与取舍
+
+需求是「hero 标题要随会话变化，徽标要变成能力入口」，同时不挂产品的组合必须保持原样。候选路径如下：
+
+| 候选方案 | 做法 | 不采用的原因 |
+| --- | --- | --- |
+| 替换整个 hero 组件 | 阴影覆盖 `conversation.content`，由产品渲染 hero | hero 内还有工作区 chip、agent preset seat、composer 接线；整体替换要连带重实现这些能力，上游每次改 hero 都要跟 |
+| 上游写产品分支 | 在 `EmptyHero` 里判断 preset 或产品名 | 把 ACAS.X 的业务词表泄漏进通用组件，dsh 其他组合被迫认识产品概念 |
+| 上游读产品服务 | hero 从产品提供的服务取文案 | 上游多一个必须存在的跨包服务依赖，服务缺失时行为退化，服务名成为长期契约 |
+| Portal / DOM 注入 | 把产品节点挂到 hero 的 DOM 上 | 拿不到标准 props（sessionId、locale、hooks），顺序与卸载不受槽位生命周期管理，测试不稳定 |
+| 复用现有槽位 | 占用 `brand.mark` 或 `agentPreset` | 位置和语义都不对，属于误用扩展点，后续上游调整这些槽位会连带破坏产品 |
+
+选「新增 `single` 槽位 + fallback」的理由：
+
+- 上游仍是默认渲染方：未占用时渲染 `fallback`，DOM 与改动前一致。
+- 占用方拿到标准 props 与 locale seat，注册与卸载走 `ctx.effect`，生命周期与其他槽位一致。
+- 变化范围只有两处声明加一次 `renderSlot`，比整体替换小一个数量级。
+- `session-maybe` 与 hero 语义对齐：没有会话时也渲染，占用方自行处理 `sessionId` 为空。
+
+这个方案的成本：槽位名与 `scope` 成为上游公开契约，产品与上游要一起演进；上游改 hero 结构时冲突集中在 `renderSlot` 调用点。相比整体替换组件，这个冲突面小得多，但确实存在。
+
 ## 改动文件（上游侵入清单）
 
 | 文件 | 改动 |
