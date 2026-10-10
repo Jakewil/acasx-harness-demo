@@ -15,7 +15,7 @@ antd 本身是运行时组件库，可以随插件 bundle 一起打包，但要�
 
 ## 机制一：把 UnoCSS 生成器装进 tsdown 插件
 
-`packages/client/acasx/tsdown.config.ts` 定义一个 tsdown 插件：`resolveId` 把 `virtual:acasx-uno.css` 指到虚拟模块，`load` 时用 `globSync('src/**/*.{ts,tsx}')` 扫描源码，交给 `createGenerator(unoConfig)` 生成 CSS，再把 CSS 包装成执行期注入 `<style data-plugin-css="acasx-uno">` 的模块；`unoConfig` 来自本包的 `uno.config.ts`。
+`packages/client/acasx/tsdown.config.ts` 定义一个 tsdown 插件：`resolveId` 把 `virtual:acasx-uno.css` 指到虚拟模块，`load` 时用 `globSync('src/**/*.{ts,tsx}')` 扫描源码，交给 `createGenerator(unoConfig)` 生成 CSS，再把 CSS 包装成执行期注入 `<style data-plugin-css="acasx-uno">` 的模块；`unoConfig` 来自 `src/client/uno-config.ts`，根 `uno.config.ts` 是编辑器发现入口。
 
 客户端源码写 `import 'virtual:acasx-uno.css'` 即可。执行期注入而非构建期产资源文件，是因为插件 bundle 没有宿主资源收集流程；`data-plugin-css` 标记用来避免重复注入。
 
@@ -45,14 +45,14 @@ CSS Modules、全局 CSS、`?inline`、UnoCSS 虚拟模块与 antd 运行期样�
 
 选当前方案的理由：生成器与组件库都装在产品包的构建链里，产物自包含，上游文件零改动；CSS 在构建期从源码抽取，结果确定且可测试。
 
-这个方案的代价必须写清楚：antd 内联后 `lib/client.js` 约 4.9 MB（gzip 约 0.9 MB），需要后续按需加载来收；样式是运行期插入 `<style>`，CSP 严格的环境要评估 nonce；`uno.config.ts` 已被插件加载，其中 `postprocess` 会把工具类选择器提权为 `body:not(#\#) .x`，这是有意为之，但属于真实的选择器权重变化，改配置后要在桌面端回归。
+这个方案的代价必须写清楚：antd 内联后 `lib/client.js` 约 4.9 MB（gzip 约 0.9 MB），需要后续按需加载来收；样式是运行期插入 `<style>`，CSP 严格的环境要评估 nonce；配置（`src/client/uno-config.ts`）已被插件加载，其中 `postprocess` 会把工具类选择器提权为 `body:not(#\#) .x`，这是有意为之，但属于真实的选择器权重变化，改配置后要在桌面端回归。
 
 ## 改动文件
 
 | 文件 | 改动 |
 | --- | --- |
 | `packages/client/acasx/tsdown.config.ts` | 虚拟 UnoCSS 模块插件、`yaml/browser` 解析 |
-| `packages/client/acasx/uno.config.ts` | 原子类预设与 `level-*` 自定义规则 |
+| `packages/client/acasx/uno.config.ts`、`src/client/uno-config.ts` | 编辑器发现入口与原子类配置（preset、`level-*` 规则、`postprocess`） |
 | `packages/client/acasx/src/client/virtual-uno.d.ts` | 虚拟模块类型声明 |
 | `packages/client/acasx/src/client/hero/AcasxCapabilitiesButton.tsx`、`.module.css` | antd 弹窗与同形按钮 |
 | `packages/client/acasx/src/client/hero/capabilities.ts` | preset 组合 YAML 中收集 MCP 服务器 |
@@ -73,4 +73,4 @@ CSS Modules、全局 CSS、`?inline`、UnoCSS 虚拟模块与 antd 运行期样�
 - `pnpm --filter @deepseek-ai/dsh-client-acasx test` 覆盖 UNO 抽取与 hero 映射。
 - 构建走包内脚本 `node scripts/run-with-product-env.mjs build`，它注入 `DSH_CLIENT_TITLE` 后调用仓库根构建；不要直接跑根 `pnpm run build`，否则产品标题会退回 DSH 默认值。
 - antd 内联后 `lib/client.js` 约 4.9 MB（gzip 约 0.9 MB），后续应评估把弹窗改为按需动态加载。
-- 插件与抽取测试现在都加载 `uno.config.ts`：`safelist`、`level-*` 规则与 `postprocess` 都会进入 bundle。改这份配置等于改工具类选择器权重，需要在桌面端回归一次。
+- 插件与抽取测试现在都加载 `src/client/uno-config.ts`：`safelist`、`level-*` 规则与 `postprocess` 都会进入 bundle。改这份配置等于改工具类选择器权重，需要在桌面端回归一次。

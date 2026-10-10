@@ -44,14 +44,14 @@ kind: 'development-guide'
 普通 `@unocss/vite` 不适用：客户端插件由 tsdown 独立打包，Vite 看不到插件源码。acasx 在自己的 `tsdown.config.ts` 里定义了一个 `acasx-uno-css` 插件：
 
 1. `resolveId('virtual:acasx-uno.css')` 指向虚拟模块 `\0acasx-uno.mjs`。
-2. `load` 用 `globSync('src/**/*.{ts,tsx}')` 读取源码文本，交给 `createGenerator(unoConfig).generate(sources, { preflights: false })` 生成 CSS；`unoConfig` 来自本包的 `uno.config.ts`，包含 preset、safelist、`level-*` 规则与 `postprocess`。
+2. `load` 用 `globSync('src/**/*.{ts,tsx}')` 读取源码文本，交给 `createGenerator(unoConfig).generate(sources, { preflights: false })` 生成 CSS；`unoConfig` 来自 `src/client/uno-config.ts`（根 `uno.config.ts` 仅供编辑器发现，re-export 同一份定义），包含 preset、safelist、`level-*` 规则与 `postprocess`。
 3. 生成的模块体在执行期注入 `<style data-plugin-css="acasx-uno">`。
 
 `src/client/index.ts` 顶部的 `import 'virtual:acasx-uno.css'` 让这段注入在 acasx 客户端入口物化时执行。注意三点：
 
 - 抽取基于源码文本，类名必须字面出现在 `src/**/*.{ts,tsx}`；动态拼接的类名不会被生成，需要 `safelist`。
 - `preflights: false` 表示只产出工具类，不注入 UnoCSS 的全局 reset，避免影响上游页面。
-- 插件与 `tests/uno.client.spec.ts` 加载同一份 `uno.config.ts`：配置里新增的规则、safelist、postprocess 要么两端都生效，要么在测试里失败，不要只改一边。
+- 插件与 `tests/uno.client.spec.ts` 加载同一份 `src/client/uno-config.ts`：配置里新增的规则、safelist、postprocess 要么两端都生效，要么在测试里失败，不要只改一边。
 
 ## 5. antd 的运行期样式
 
@@ -65,7 +65,7 @@ acasx 没有引入 antd 的静态样式文件。antd 6 通过 `@ant-design/cssin
 
 这条规则解释了一个细节：内置注入模块自己设了 `data-plugin`；acasx 的 UnoCSS 注入器只设 `data-plugin-css`，靠模块系统的 `claimStyles` 在物化期补上 `data-plugin`，所以两类样式都能被卸载清理。
 
-层叠顺序由「模块物化顺序 + React 渲染顺序」决定，选择器同权重时后插入的生效。CSS Modules 靠哈希隔离；UnoCSS 工具类、全局 CSS、antd 样式都是全局的，需要靠选择器范围与顺序控制。`uno.config.ts` 的 `postprocess` 把工具类选择器提权为 `body:not(#\#) .x`，用于压过同权重的全局/antd 样式；这是真实的选择器权重变化，改配置后要在桌面端回归。
+层叠顺序由「模块物化顺序 + React 渲染顺序」决定，选择器同权重时后插入的生效。CSS Modules 靠哈希隔离；UnoCSS 工具类、全局 CSS、antd 样式都是全局的，需要靠选择器范围与顺序控制。`uno-config.ts` 的 `postprocess` 把工具类选择器提权为 `body:not(#\#) .x`，用于压过同权重的全局/antd 样式；这是真实的选择器权重变化，改配置后要在桌面端回归。
 
 ## 7. 构建入口与产物
 

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { createGenerator } from 'unocss'
-import unoConfig from '../uno.config.ts'
+import unoConfig from '../src/client/uno-config.ts'
 
 const componentPath = fileURLToPath(new URL('../src/client/hero/AcasxCapabilitiesButton.tsx', import.meta.url))
 
