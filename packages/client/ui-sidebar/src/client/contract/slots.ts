@@ -128,7 +128,8 @@ export type SidebarRootInjected = {
   /**
    * 是否渲染外壳自带的新会话按钮。ACAS.X 把"新建会话"收进具体业务场景
    * （日常监管 / 心盾）内部，因此关闭它；保留该注入项而不是删除 JSX，便于
-   * 后续按 profile 或配置再打开。
+   * 后续按 profile 或配置再打开。缺省（`undefined`）渲染按钮，只有显式
+   * `false` 隐藏，保证不传该字段的组合保持上游行为。
    */
   showNewSession?: boolean
   /** Private reactive sources bound to framework selector hooks. */
