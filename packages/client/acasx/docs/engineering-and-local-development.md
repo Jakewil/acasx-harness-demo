@@ -7,6 +7,10 @@ kind: 'development-guide'
 
 本文件面向后续接手 ACAS.X fork 的开发与运维：怎么在本仓库里跑起来、怎么构建和验证、哪些规则不能破、上游升级时先看哪里。命令都在仓库根目录执行，另有说明的除外。
 
+产品交付形态是桌面端：Electron 壳运行完整 dsh 运行时的同一个 `web-app` bundle（profile `desktop`），客户端插件与页面都由它加载。Web 入口保留用于本地调试、自动化测试与录屏，不是交付目标；下面凡标「仅调试」的命令不要用于验收。桌面端与 Web 共用同一套客户端插件，所以改动两端同源，但验收以桌面端为准。
+
+开发工作流要区分两条路径：快速热更新目前只有 Web 调试路径有（`dev:web` 用 tsc / tsdown / vite 的常驻 watch，改客户端代码会重建 bundle）；桌面端 `dev:desktop` 是构建后启动，改代码要重新构建再启动。日常快速迭代可以在 Web 上做，功能验收以桌面端为准。
+
 ## 1. 环境与运行时隔离
 
 仓库要求 Node `^22.19 || >=24`，用 pnpm workspace 管理，安装只用 `pnpm install`。仓库没有配置自动安装（`.npmrc` 的 `verify-deps-before-run=false`），安装是显式动作；不要手工编辑 `pnpm-lock.yaml`。
@@ -21,19 +25,23 @@ kind: 'development-guide'
 
 `.acasx-dev-home/` 与 `.acasx-workspaces/` 已在 `.gitignore` 中。不要在 `.env` 里设 `DSH_HOME` 来指望它生效：`loadLayeredEnv` 在读取 `.env` 之前就已经解析了 home。不用 VS Code 时，自己在 shell 里导出 `DSH_HOME=<仓库>/.acasx-dev-home`。
 
-## 2. 产品命令（走包内脚本）
+## 2. 交付形态与产品命令
 
 ACAS.X 的产品标题是构建期注入的 `DSH_CLIENT_TITLE`。包内脚本 `packages/client/acasx/scripts/run-with-product-env.mjs` 读取 `package.json` 的 `acasx.productTitle`，注入环境后调用仓库根脚本。
 
 | 目的 | 命令 |
 | --- | --- |
+| 桌面端日常开发（构建后启动，注入产品标题） | `pnpm --filter @deepseek-ai/dsh-client-acasx run dev:desktop` |
+| 只重启已构建产物 | `pnpm run start:desktop`（跳过构建；产物须由包内脚本构建） |
 | 构建产品产物 | `pnpm --filter @deepseek-ai/dsh-client-acasx run build:product` |
-| 开发 Web（改动客户端热更新） | `pnpm --filter @deepseek-ai/dsh-client-acasx run dev:web` |
-| 开发桌面端 | `pnpm --filter @deepseek-ai/dsh-client-acasx run dev:desktop` |
+| 桌面端打包（Windows） | `pnpm --filter @deepseek-ai/dsh-desktop run package:win:x64`；只出目录用 `package:win:x64:dir` |
+| 桌面端打包自检 | `pnpm --filter @deepseek-ai/dsh-desktop run check:package` |
+| 仅调试：Web 开发（客户端热更新） | `pnpm --filter @deepseek-ai/dsh-client-acasx run dev:web` |
+| 仅调试：Web 脚本 / 浏览器自动化 | `pnpm dsh web --patch apps/web/tests/pin-browse-picker.overlay.yml` |
 
-不要直接跑仓库根的 `pnpm run build` / `dev:web` / `dev:desktop` 来做产品构建：它们读不到 `acasx.productTitle`，产物会退回 DSH 默认标题。改产品标题只改 `packages/client/acasx/package.json` 的 `acasx.productTitle` 一行。
+不要直接跑仓库根的 `pnpm run build` / `dev:web` / `dev:desktop` 来做产品构建：它们读不到 `acasx.productTitle`，产物会退回 DSH 默认标题。改产品标题只改 `packages/client/acasx/package.json` 的 `acasx.productTitle` 一行。Windows 打包与签名要求见 `apps/desktop/README.md`。
 
-只想快速跑一次任务时可以用：`pnpm dsh --profile headless "task"`（需要 `DEEPSEEK_API_KEY`）。Web 浏览器自动化或录 GIF 时按根 `AGENTS.md` 的要求叠加目录选择器覆盖：`pnpm dsh web --patch apps/web/tests/pin-browse-picker.overlay.yml`。
+只想快速跑一次任务时可以用：`pnpm dsh --profile headless "task"`（需要 `DEEPSEEK_API_KEY`）。
 
 ## 3. 构建
 
@@ -59,7 +67,8 @@ ACAS.X 的产品标题是构建期注入的 `DSH_CLIENT_TITLE`。包内脚本 `p
 | 记录会话快照回放（无 key） | `pnpm run test:snapshot`，可用 `-t <name>` 过滤 |
 | 重新录制快照（需要 key） | `pnpm run test:snapshot:record` |
 | 真实 API e2e | `pnpm run test:e2e`（无 `DEEPSEEK_API_KEY` 时自跳过） |
-| Web 内建流程 | `pnpm run test:web:built` |
+| 桌面端安装包自检 | `pnpm --filter @deepseek-ai/dsh-desktop run check:package`、`run test:installer` |
+| 仅调试：Web 内建流程 | `pnpm run test:web:built` |
 
 Windows 上默认线程池可能崩溃或在 jsdom 测试里挂起；聚焦跑 UI 测试时加 `--pool=forks --no-file-parallelism`，例如 `pnpm exec vitest run --pool=forks --no-file-parallelism packages/client/ui-sidebar/tests`。
 
