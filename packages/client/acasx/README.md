@@ -19,10 +19,18 @@ kind: 'package-reference'
 | `sidebar.workspaces`         | 左侧业务树；以 `priority: -1` 阴影覆盖上游的 workspace/session 浏览器 |
 | `sidebar.panellist` + `main` | 业务模块入口与它打开的主面板                                          |
 | `conversation.hero.headline` | 按当前会话 preset 显示「主对话 / 日常监管 / 心盾」                    |
+| `conversation.hero.preview`  | 「预览版」按钮；点击打开 MCP 与 Skills 能力弹窗                       |
 
-### Hero 标题
+### Hero 标题与能力弹窗
 
-`ui-conversation` 的 hero 标题原本是写死的；上游现在提供 `conversation.hero.headline` 这个 `session-maybe` 单槽，本包占用后读取当前会话的 `projectionValues.agentPreset`，把 `standard` 映射成「主对话」、`richang-jianguan` 映射成「日常监管」、`xindun` 映射成「心盾」，未知值回退到「主对话」。
+`ui-conversation` 的 hero 标题和“预览版”徽标原本是写死的；上游现在提供两个 `session-maybe` 单槽，本包占用后接管渲染：
+
+- `conversation.hero.headline`：读取当前会话的 `projectionValues.agentPreset`，把 `standard` 映射成「主对话」、`richang-jianguan` 映射成「日常监管」、`xindun` 映射成「心盾」，未知值回退到「主对话」。
+- `conversation.hero.preview`：渲染与徽标同形的按钮，点击后用 antd 6 `Modal` 展示当前会话的 MCP 与 Skills。
+
+Skills 走现成的 `skills/list` Remote。MCP 当前从 `agentPresets/read` 返回的 preset 组合 YAML 中解析 `mcp-client` 行，因此只覆盖 preset 声明的服务器；profile 全局 MCP 行、运行时连接状态和实际工具列表尚未纳入。后续需要精确到会话作用域时，应在 `acasxScenario` 增加按 `sessionId` 查询 Host scope 的 Remote，而不是继续扩展 YAML 解析。
+
+本包同时验证 antd 6 与 UnoCSS：antd 6 与 React 18.3 兼容，不要求升级 React 19；UnoCSS 由 `tsdown.config.ts` 中的构建插件扫描 `src/**/*.{ts,tsx}` 生成 CSS，并通过 `virtual:acasx-uno.css` 在执行期注入 style 标签。当前 `lib/client.js` 约 4.9 MB（gzip 约 0.9 MB），后续应评估把 antd 弹窗改为按需动态加载。
 
 ### 为什么用低优先级阴影，而不是禁用 `ui-workspace`
 

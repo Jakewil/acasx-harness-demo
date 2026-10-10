@@ -1,4 +1,5 @@
 /** ACAS.X 业务界面：品牌字标、模块导航，以及各模块的主面板。 */
+import 'virtual:acasx-uno.css'
 import { brandString } from '@deepseek-ai/dsh-brand'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-api-gateway/client'
@@ -18,8 +19,11 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 // 类型-only：引入 ui-conversation 的 hero 扩展槽声明。
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { ArchiveCompletenessPanel } from './archive/ArchiveCompletenessPanel.tsx'
 import { AcasxBrandName } from './brand/BrandName.tsx'
+import { AcasxCapabilitiesButton, type AcasxCapabilitiesInjected } from './hero/AcasxCapabilitiesButton.tsx'
+import { parseMcpServers } from './hero/capabilities.ts'
 import { AcasxHeroTitle } from './hero/AcasxHeroTitle.tsx'
 import { ArchiveIcon, ChatIcon, ConnectorIcon, MoreIcon } from './panels/ModuleIcons.tsx'
 import { ArchiveLibraryPage, MorePage, SkillConnectorPage } from './panels/PlaceholderPages.tsx'
@@ -60,7 +64,7 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
   const disposeRemote = await ctx.remote.$mount(acasxScenarioRemote)
   // `acasxScenario` 由本插件自挂载，`remote.session` 由 api-remotes 挂载；两者都必须
   // 在声明了对应 inject 的子作用域里访问，否则 cordis 拒绝读取 `ctx.remote.<ns>`。
-  const ui = ctx.inject(['remote.acasxScenario', 'remote.session', 'workspaces'], registerAcasxUi)
+  const ui = ctx.inject(['remote.acasxScenario', 'remote.session', 'remote.skills', 'remote.agentPresets', 'workspaces'], registerAcasxUi)
   try {
     await ui
   } catch (error) {
@@ -84,6 +88,32 @@ function registerAcasxUi(ctx: ClientContext): void {
 
   ctx.slots.inject('conversation.hero.headline', () =>
     ctx.slots.register({ name: 'conversation.hero.headline', locale: NS }, AcasxHeroTitle),
+  )
+  ctx.slots.inject('conversation.hero.preview', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.hero.preview',
+        locale: NS,
+        inject: (sessionId: SessionId | undefined): AcasxCapabilitiesInjected => ({
+          load: async () => {
+            if (sessionId === undefined) return { mcpServers: [], skills: [] }
+            const skillsResult = await ctx.remote.skills.list({ sessionId })
+            const skills = skillsResult.ok
+              ? skillsResult.value.skills.map(skill => ({
+                name: skill.name,
+                description: skill.description,
+                modelInvocable: skill.modelInvocable,
+              }))
+              : []
+            const presetId = ctx.sessions.list.getSnapshot().byId[sessionId]?.projectionValues?.agentPreset
+            const presetResult = typeof presetId === 'string' ? await ctx.remote.agentPresets.read(presetId) : undefined
+            const mcpServers = presetResult?.ok ? parseMcpServers(presetResult.value.content) : []
+            return { mcpServers, skills }
+          },
+        }),
+      },
+      AcasxCapabilitiesButton,
+    ),
   )
 
   // 用更低的优先级阴影覆盖侧栏浏览区：`ui-workspace` 继续挂载并继续提供
