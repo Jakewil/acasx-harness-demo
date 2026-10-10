@@ -27,6 +27,24 @@ antd 本身是运行时组件库，可以随插件 bundle 一起打包，但要�
 
 该按钮占用第二类定制新增的 `conversation.hero.preview` 槽位，点击后读取 `skills/list` Remote 与 `agentPresets/read` 返回的 preset 组合 YAML，展示当前会话的 MCP 与 Skills。
 
+## 候选方案与取舍
+
+原子 CSS 与组件库各有候选路径，筛选标准是「只影响产品包、构建结果确定、不把成本推给上游」。
+
+| 候选方案 | 做法 | 不采用的原因 |
+| --- | --- | --- |
+| `@unocss/vite` 接到 `apps/web` | 在 Vite 构建里生成 CSS | 客户端插件由 tsdown 独立打包，Vite 看不到插件源码，原子类不会被抽取 |
+| 把 UnoCSS 配置加进上游构建 | 改 `apps/web` 或上游包 | 把产品样式需求塞进上游构建，所有组合一起受影响，产品包不再自包含 |
+| 只用 CSS Modules / 手写 CSS | 每个组件写样式文件 | 能用但失去原子类工作流；产品面按 token 拼布局时样式文件会持续膨胀，改动也更难复用 |
+| 浏览器运行期扫 DOM 生成 CSS | 运行时收集 class 再注入 | 首屏闪烁、CSP 与性能风险、结果不确定，测试也无法稳定断言 |
+| 让宿主收集插件 CSS 资产 | 依赖构建系统收集插件样式 | 插件 bundle 是自包含的工厂闭包，没有资源收集通道；在插件内注入 `<style>` 是当前契约下的直接做法 |
+| 换组件库或自研组件 | 不用 antd | 维护成本高；仓库政策优先维护成熟依赖。antd 6 的 peer 允许 React 18，不需要为它升级 React 19 |
+| 让上游改 `yaml` 解析 | 在上游处理 node/browser 差异 | 浏览器 bundle 里 `yaml` 落到 node 构建会带 `require("process")`；在产品包的 tsdown 插件里 alias 到 `yaml/browser` 只影响产品包 |
+
+选当前方案的理由：生成器与组件库都装在产品包的构建链里，产物自包含，上游文件零改动；CSS 在构建期从源码抽取，结果确定且可测试。
+
+这个方案的代价必须写清楚：antd 内联后 `lib/client.js` 约 4.9 MB（gzip 约 0.9 MB），需要后续按需加载来收；样式是运行期插入 `<style>`，CSP 严格的环境要评估 nonce；`uno.config.ts` 目前没有被 tsdown 插件加载，自定义规则、safelist 与 postprocess 尚未生效。
+
 ## 改动文件
 
 | 文件 | 改动 |
