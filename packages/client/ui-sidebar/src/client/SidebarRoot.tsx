@@ -239,7 +239,9 @@ export function SidebarRoot({
               </span>
             </span>
           )
-          return darwinDesktop
+          // Product shells that move New Session into their own surfaces also
+          // drop the brand's shortcut role; the identity stays, the action goes.
+          return darwinDesktop || showNewSession === false
             ? <span className={clsx(css.brand, css.wide)}>{identity}</span>
             : (
               <button
@@ -257,7 +259,7 @@ export function SidebarRoot({
       </div>
 
       {/* The label fades before the hover/focus shortcut, including on translucent backgrounds. */}
-      {showNewSession && (
+      {showNewSession !== false && (
         <Tooltip label={t('session.new.label')} shortcutKeys={newShortcut?.keys} delayMs={500} side={captionTooltipSide} disabled={wide}>
           <button
             type="button"

@@ -35,10 +35,11 @@ type AttentionSnapshot = Parameters<Parameters<SidebarRootComponentProps['useSes
 const noAttention: AttentionSnapshot = new Map()
 const useSessionStatus: SidebarRootComponentProps['useSessionStatus'] = selector => selector(noAttention)
 
-function mountShell({ collapsed = false, width = 300, shortcuts = [] }: {
+function mountShell({ collapsed = false, width = 300, shortcuts = [], showNewSession }: {
   collapsed?: boolean
   width?: number
   shortcuts?: readonly ShortcutCatalogEntry[]
+  showNewSession?: boolean
 } = {}) {
   const startSession = vi.fn()
   const toggleSidebar = vi.fn()
@@ -55,6 +56,7 @@ function mountShell({ collapsed = false, width = 300, shortcuts = [] }: {
       usePanelInfo={usePanelInfo} selectPanel={() => {}} usePanels={selector => selector([])} useShortcuts={selector => selector(shortcuts)}
       useResource={useResource} useWorkspaces={neverHook}
       startSession={startSession} toggleSidebar={toggleSidebar} t={t}
+      {...(showNewSession === undefined ? {} : { showNewSession })}
       renderSlot={((
         key: string,
         owner: SidebarFooterActionOwnerProps | SidebarSectionOwnerProps | SidebarSettingsOwnerProps,
@@ -132,6 +134,17 @@ describe('SidebarRoot shell', () => {
     expect(b.startSession).toHaveBeenCalledTimes(2)
     fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
     expect(b.toggleSidebar).toHaveBeenCalledOnce()
+  })
+
+  it('hides the shell New Session button only on an explicit showNewSession: false', () => {
+    mountShell()
+    // Undefined keeps upstream behavior: the wordmark and the capsule both start a session.
+    expect(screen.queryAllByRole('button', { name: 'New session' })).toHaveLength(2)
+    cleanup()
+    mountShell({ showNewSession: false })
+    // The product shell keeps the brand identity but removes both new-session actions.
+    expect(screen.queryAllByRole('button', { name: 'New session' })).toHaveLength(0)
+    expect(screen.getByTestId('custom-brand-name')).toBeTruthy()
   })
 
   it('renders generic brand fallbacks when no package fills the slots', () => {

@@ -15,7 +15,7 @@ kind: 'customization-note'
 | --- | --- | --- | --- |
 | 内部 preset 不进选择器 | `PresetDefinition.hidden?` → `AgentPresetRow.hidden?` → `AgentPresetOption.hidden?` | `undefined`（可见） | 名字仍可解析用于会话芯片/头部，只有用户选择器与设置 roster 过滤 |
 | 产品会话固定工作区 | `ConversationInjected.workspaceSwitchEnabled?` | `undefined`（可切换） | `false` 时已选中工作区的 hero chip 置灰锁定；冷启动未选中时仍保留首次选择入口 |
-| 外壳不显示「新建会话」 | `SidebarRootInjected.showNewSession?` | `undefined`（渲染） | 产品把新建入口收进具体场景，外壳按钮不再出现 |
+| 外壳不显示「新建会话」 | `SidebarRootInjected.showNewSession?` | `undefined`（渲染） | 产品把新建入口收进具体场景；`false` 时品牌字标与胶囊按钮都降级为纯展示 |
 
 关键取舍是「缺省值等于旧行为」：`hidden` 缺省可见、`workspaceSwitchEnabled` 缺省可切换、`showNewSession` 缺省渲染。上游组合不传这些字段时，行为与改动前逐字一致，因此这类改动不需要迁移和升级说明。
 
@@ -45,4 +45,5 @@ kind: 'customization-note'
 
 - 单测覆盖三个包的本地行为：`pnpm --filter @deepseek-ai/dsh-agent-preset-registry test`、`pnpm --filter @deepseek-ai/dsh-client-ui-agent-preset test`、`pnpm --filter @deepseek-ai/dsh-client-ui-conversation test`、`pnpm --filter @deepseek-ai/dsh-client-ui-sidebar test`。
 - 快照 `apps/web/tests/expected/agent-preset-selection/hero.expected.md` 记录锁定态，是端到端行为信号。
+- 隐藏入口只改渲染角色，`startSession` 回调与快捷键绑定不变，产品在场景内部仍可复用同一动作。
 - 三个字段都不进入 Session 持久化格式、不进入 wire 协议、不改变默认渲染，因此升级风险集中在上游同名类型的定义处；上游破坏这些类型时，编译错误会先暴露。
