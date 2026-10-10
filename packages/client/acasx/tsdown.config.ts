@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import type { UserConfig } from 'tsdown'
 import { createGenerator } from 'unocss'
 import { clientBundle } from '../tsdown.client.ts'
-import unoConfig from './uno.config.ts'
+import unoConfig from './src/client/uno-config.ts'
 
 const packageRootUrl = new URL('.', import.meta.url)
 const packageRoot = fileURLToPath(packageRootUrl)
