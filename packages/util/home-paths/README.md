@@ -38,6 +38,8 @@ const cache = dshCachePath('models')         // $DSH_HOME/cache/models, default 
 
 An explicit configured path has the highest precedence, then `$DSH_HOME`, then the default `~/.dsh`. An empty or whitespace-only `$DSH_HOME` is treated as unset, so a blank override never resolves the home to the current working directory.
 
+`applyAcasxHomeDefault(env)` is the ACAS.X product entry-point default: it sets `$DSH_HOME` to the operating-system home's `.acasx` directory only when `$DSH_HOME` is unset or blank. Official dsh installs keep `~/.dsh`, so the fork's launchers call it to keep a product runtime from reading or writing a user's official home. An explicit `$DSH_HOME`, including the repository-local development home, always wins.
+
 `dshCachePath(...segments)` derives paths from the resolved home's `cache` directory. With no segments it returns the cache directory itself. Pass an initial options object, `dshCachePath({ dshHome: home }, ...segments)`, to use an explicit configured home with the same precedence and tilde expansion. It returns an absolute path without creating directories.
 
 ### Displaying a home

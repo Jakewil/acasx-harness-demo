@@ -331,6 +331,10 @@
     - id: ui-brand-official
       name: '@deepseek-ai/dsh-client-ui-brand-official'
 
+    # ACAS.X product surface: brand wordmark and business module navigation.
+    - id: acasx
+      name: '@deepseek-ai/dsh-client-acasx'
+
     - id: ui-attachment
       name: '@deepseek-ai/dsh-client-ui-attachment'
 
@@ -581,3 +585,11 @@
       name: '@deepseek-ai/dsh-agent-preset-registry'
       config:
         default: standard
+
+# ACAS.X 产品化：开发者面向的「插件」入口与不属于本产品的「自动化任务」入口
+# 都不出现在产品侧栏里。这两个客户端包不提供任何被注入的服务
+# （`pluginNavigation` 只在 ui-plugin-manager 内部使用），禁用不会断链。
+- id: ui-plugin-manager
+  disabled: true
+- id: ui-schedule
+  disabled: true

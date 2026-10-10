@@ -7,6 +7,12 @@ export interface PresetDefinition {
   readonly name?: string
   readonly description?: string
   readonly order?: number
+  /**
+   * Whether this preset is an internal composition the user cannot pick.
+   * Hidden presets still compose Sessions that name them explicitly; only the
+   * user-facing roster and pickers omit them.
+   */
+  readonly hidden?: boolean
   readonly plugins: readonly (Omit<EntryOptions, 'id' | 'disabled'> & { id?: string; disabled?: EntryOptions['disabled'] | JsExpr })[]
 }
 

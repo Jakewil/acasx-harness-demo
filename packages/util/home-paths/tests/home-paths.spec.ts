@@ -3,8 +3,10 @@ import { homedir, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  ACASX_HOME_DIR_NAME,
   DEFAULT_DSH_HOME_DISPLAY,
   DSH_HOME_DIR_NAME,
+  applyAcasxHomeDefault,
   canonicalizeWatchPath,
   defaultDshHome,
   dshCachePath,
@@ -23,6 +25,23 @@ describe('dsh path helpers', () => {
     expect(DSH_HOME_DIR_NAME).toBe('.dsh')
     expect(DEFAULT_DSH_HOME_DISPLAY).toBe('~/.dsh')
     expect(defaultDshHome()).toBe(join(homedir(), '.dsh'))
+  })
+
+  it('defaults a blank DSH_HOME to the ACAS.X product home and keeps an explicit one', () => {
+    const acasxHome = join(homedir(), ACASX_HOME_DIR_NAME)
+    expect(ACASX_HOME_DIR_NAME).toBe('.acasx')
+
+    const unset: NodeJS.ProcessEnv = {}
+    applyAcasxHomeDefault(unset)
+    expect(unset.DSH_HOME).toBe(acasxHome)
+
+    const blank: NodeJS.ProcessEnv = { DSH_HOME: '   ' }
+    applyAcasxHomeDefault(blank)
+    expect(blank.DSH_HOME).toBe(acasxHome)
+
+    const explicit: NodeJS.ProcessEnv = { DSH_HOME: '~/env-dsh' }
+    applyAcasxHomeDefault(explicit)
+    expect(explicit.DSH_HOME).toBe('~/env-dsh')
   })
 
   it('expands tilde paths without changing non-tilde paths', () => {

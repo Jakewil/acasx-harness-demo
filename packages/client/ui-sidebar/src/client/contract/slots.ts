@@ -125,6 +125,12 @@ export type SidebarRootInjected = {
   toggleSidebar: () => void
   /** Select the global panel addressed by a sidebar row. */
   selectPanel: (id: MainPanelId) => void
+  /**
+   * 是否渲染外壳自带的新会话按钮。ACAS.X 把"新建会话"收进具体业务场景
+   * （日常监管 / 心盾）内部，因此关闭它；保留该注入项而不是删除 JSX，便于
+   * 后续按 profile 或配置再打开。
+   */
+  showNewSession?: boolean
   /** Private reactive sources bound to framework selector hooks. */
   hooks: { panels: ObservableSnapshot<readonly SidebarPanelMetadata[]>; shortcuts: ObservableSnapshot<readonly ShortcutCatalogEntry[]> }
 }

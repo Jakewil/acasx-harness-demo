@@ -114,6 +114,23 @@ describe('the agent-preset roster store', () => {
     expect(controller.store.getSnapshot().options.map(option => option.id)).toEqual(['standard'])
   })
 
+  it('carries a hidden preset for display without offering it as a choice', async () => {
+    const controller = derivedController(fakeApi([
+      { id: 'standard', isDefault: true },
+      { id: 'richang-jianguan', isDefault: false, hidden: true, name: '日常监管' },
+    ] as never))
+
+    await controller.load()
+
+    // A hidden preset composes sessions the product starts itself. Its name
+    // still resolves so the chip and header can label the session, while the
+    // picker filters it out of its menu.
+    expect(controller.store.getSnapshot().options).toEqual([
+      { id: 'standard' },
+      { id: 'richang-jianguan', name: '日常监管', hidden: true },
+    ])
+  })
+
   it('carries the display metadata a preset published', async () => {
     const controller = derivedController(fakeApi([
       { id: 'standard', isDefault: true, name: '标准模式', description: '完整的编码 agent。' },

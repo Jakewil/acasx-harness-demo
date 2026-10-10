@@ -23,7 +23,7 @@ export function ConversationContent(props: ConversationContentProps) {
   const {
     sessionId, phase, hero, useSession, useSessions, useSessionStatus,
     useWorkspaces, useInput, useComposerBlock, renderSlot, renderSlotChain,
-    selectWorkspace, t, useFactorySlot,
+    selectWorkspace, workspaceSwitchEnabled, t, useFactorySlot,
   } = props
   const session = useSession(snapshot => snapshot)
   const Views = useFactorySlot('views', ConversationSessionView)
@@ -106,6 +106,12 @@ export function ConversationContent(props: ConversationContentProps) {
   const chipTitle = storedChipTitle === undefined
     ? undefined
     : workspaceDisplayTitle(storedChipTitle, t('workspace.defaultName'))
+  // 冷启动尚无工作区时保留选择入口；已选中后按注入配置决定是否锁定切换。
+  const workspaceChipDisabled = workspaceSwitchEnabled === false && chipTitle !== undefined
+  // 锁定态不再接受切换：启动阶段恰好打开的菜单随锁定一起收起。
+  useEffect(() => {
+    if (workspaceChipDisabled) setPickerOpen(false)
+  }, [workspaceChipDisabled])
 
   const heroWorkspaceRow = (
     <div className={css.heroWorkspaceRow}>
@@ -113,6 +119,7 @@ export function ConversationContent(props: ConversationContentProps) {
         buttonRef={pickerAnchor}
         label={chipTitle}
         menuOpen={pickerOpen}
+        disabled={workspaceChipDisabled}
         onClick={() => { setPickerOpen(open => !open) }}
         t={t}
       />

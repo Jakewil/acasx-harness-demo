@@ -121,6 +121,21 @@ describe('the new-session chip', () => {
     expect(screen.getByRole('menuitem', { name: /^My workflow/ })).toBeTruthy()
   })
 
+  it('keeps a hidden preset\'s name on the chip but omits it from the menu', () => {
+    renderSeat({
+      current: 'richang-jianguan',
+      options: [
+        { id: 'standard' },
+        { id: 'richang-jianguan', name: '日常监管', hidden: true },
+      ],
+    })
+    const trigger = screen.getByRole<HTMLButtonElement>('button', { name: '日常监管' })
+    fireEvent.click(trigger)
+    expect(screen.getAllByRole('menuitem')).toHaveLength(1)
+    expect(screen.getByRole('menuitem', { name: /^Standard mode/ })).toBeTruthy()
+    expect(screen.queryByRole('menuitem', { name: /日常监管/ })).toBeNull()
+  })
+
   it('keeps the current mode visible without opening a picker when all options are hidden', () => {
     const actions = renderSeat({ current: 'minimal', options: [{ id: 'ptc' }, { id: 'minimal' }] }, undefined, undefined, false)
     const trigger = screen.getByRole<HTMLButtonElement>('button', { name: en.presetMinimalName })

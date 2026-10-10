@@ -316,6 +316,8 @@ export function apply(ctx: Context, config: Config = Config({})): void {
       'conversation.composer.bar': { kind: 'single', scope: 'session-maybe' },
       'conversation.input.dock': { kind: 'list', scope: 'session' },
       'conversation.hero.brand.mark': { kind: 'single', scope: 'root' },
+      'conversation.hero.headline': { kind: 'single', scope: 'session-maybe' },
+      'conversation.hero.preview': { kind: 'single', scope: 'session-maybe' },
       'conversation.hero.workspace': { kind: 'single', scope: 'root' },
       'conversation.hero.agentPreset': { kind: 'single', scope: 'session-maybe' },
     },
@@ -327,6 +329,9 @@ export function apply(ctx: Context, config: Config = Config({})): void {
       hooks: {
         composerBlock: sessionId === undefined ? ABSENT_BLOCK : composerBlocks.storeFor(sessionId),
       },
+      // ACAS.X 产品化：主工作区固定后不再提供切换入口。冷启动尚未选中工作区时，
+      // `ConversationContent` 仍保留 chip 与 composer 两条首次选择路径。
+      workspaceSwitchEnabled: false,
       selectWorkspace: workspaceId => workspaceNavigation.openWorkspace(workspaceId, (nextId) => {
         if (sessionId !== undefined && nextId !== sessionId) {
           const from = inputHub.shell(sessionId)

@@ -103,7 +103,8 @@ export function AgentPresetSeat({
   }, [load])
 
   const options = useMemo(
-    () => state.options.filter(option => developerTools || !requiresCodingTools(option)),
+    () => state.options.filter(option =>
+      option.hidden !== true && (developerTools || !requiresCodingTools(option))),
     [state.options, developerTools],
   )
 

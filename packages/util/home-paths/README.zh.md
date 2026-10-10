@@ -38,6 +38,8 @@ const cache = dshCachePath('models')         // $DSH_HOME/cache/models, default 
 
 显式配置的路径优先级最高，然后是 `$DSH_HOME`，最后是默认的 `~/.dsh`。空或仅含空白的 `$DSH_HOME` 视为未设置，因此空白的覆盖值绝不会把主目录解析到当前工作目录。
 
+`applyAcasxHomeDefault(env)` 是 ACAS.X 产品入口的默认值：仅当 `$DSH_HOME` 未设置或为空白时，才把它设为操作系统主目录下的 `.acasx` 目录。官方 dsh 安装仍使用 `~/.dsh`，因此本 fork 的各启动入口调用它，避免产品运行时读写用户的官方主目录。显式设置的 `$DSH_HOME`（含仓库内的开发主目录）始终优先。
+
 `dshCachePath(...segments)` 从解析出的主目录下的 `cache` 目录派生路径。不传路径段时返回缓存目录本身。传入首个选项对象 `dshCachePath({ dshHome: home }, ...segments)` 可使用显式配置的主目录，遵循相同的优先级与波浪号展开规则。它返回绝对路径，不会创建目录。
 
 ### 展示主目录

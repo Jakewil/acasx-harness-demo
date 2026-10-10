@@ -1,2 +1,2 @@
-- button "Choose workspace": workspace
+- button "workspace" [disabled]
 - button "Standard mode"

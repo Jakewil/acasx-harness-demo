@@ -171,10 +171,14 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
-/* Locked form (bound guidance state): a static echo — no hover feedback, no
-   pointer affordance; label keeps full contrast. */
+/* 置灰锁定态：静态展示当前工作区，去掉悬停反馈与指针提示。 */
 .workspace:disabled {
+  color: var(--dsw-alias-label-dimmed);
   cursor: default;
+}
+
+.workspace:disabled .folder {
+  color: inherit;
 }
 
 .folder {

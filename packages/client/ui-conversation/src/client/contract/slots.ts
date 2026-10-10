@@ -189,6 +189,10 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'conversation.hero.workspace': { kind: 'single'; scope: 'root'; owner: EmptyWorkspaceOwnerProps }
     /** Brand mark shown before the blank-session headline. */
     'conversation.hero.brand.mark': { kind: 'single'; scope: 'root'; owner: HeroBrandMarkOwnerProps }
+    /** Hero headline; falls back to the shared product copy. */
+    'conversation.hero.headline': { kind: 'single'; scope: 'session-maybe' }
+    /** Hero badge; falls back to the shared preview badge. */
+    'conversation.hero.preview': { kind: 'single'; scope: 'session-maybe' }
     /** Agent-preset control staged for a New Session. */
     'conversation.hero.agentPreset': { kind: 'single'; scope: 'session-maybe'; owner: HeroAgentPresetOwnerProps }
     /** Full-width entries above the composer card. */
@@ -234,6 +238,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
         'conversation.composer.bar': { kind: 'single'; scope: 'session-maybe' }
         'conversation.input.dock': { kind: 'list'; scope: 'session' }
         'conversation.hero.brand.mark': { kind: 'single'; scope: 'root' }
+        'conversation.hero.headline': { kind: 'single'; scope: 'session-maybe' }
+        'conversation.hero.preview': { kind: 'single'; scope: 'session-maybe' }
         'conversation.hero.workspace': { kind: 'single'; scope: 'root' }
         'conversation.hero.agentPreset': { kind: 'single'; scope: 'session-maybe' }
       }
@@ -329,6 +335,12 @@ export type ConvViewProps = PropsRuntime<'conversation.view'>
 export interface ConversationInjected {
   /** Connect and open a blank Session in the selected Workspace. */
   selectWorkspace: (workspaceId: WorkspaceId) => Promise<void>
+  /**
+   * 是否允许通过 hero 工作区 chip 切换工作区。`false` 且已选中工作区时，
+   * chip 置灰锁定；未提供按 `true` 处理。冷启动尚未选中工作区时，
+   * chip 和 composer 入口仍可完成首次选择。
+   */
+  workspaceSwitchEnabled?: boolean
   /** Session-addressed composer block source, or the stable absent source. */
   hooks: { composerBlock: ObservableSnapshot<ComposerBlock | undefined> }
 }
