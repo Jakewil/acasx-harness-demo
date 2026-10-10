@@ -7,6 +7,8 @@ kind: 'development-guide'
 
 本文件说明 acasx 客户端包里的几种 CSS 分别由谁编译、在什么时机进入 DOM、由谁清理。acasx 走的是「动态客户端插件」通道：源码由 `packages/client/tsdown.client.ts` 的 `clientBundle()` 打包成 `lib/client.js`，运行时通过模块表加载，CSS 内联进这个 bundle，而不是作为独立 `.css` 资源由宿主 Vite 处理。
 
+产品交付目标是桌面端：Electron 加载的仍是这一个客户端 bundle（`dsh-app://app/`），所以下面这条 CSS 链路在桌面端同样成立。Web 只是本地调试路径。
+
 ## 总览
 
 | 写法 | 编译者 | 产物 | 进入 DOM 的时机 | 归属与清理 |
@@ -69,7 +71,9 @@ acasx 没有引入 antd 的静态样式文件。antd 6 通过 `@ant-design/cssin
 
 客户端构建：`pnpm run build:lib:client`（等价于 `tsc -b tsconfig.client.json && tsdown --config-loader native --env.DSH_BUILD_FACE client`）。
 
-输出 `lib/client.js`：`format: 'cjs'`、`platform: 'browser'`，文件头是 `window.__ModuleLoader__.load({ id, factory })` 的注册包装。所有上述 CSS（除 `?inline`）都被内联进这个 bundle 的执行逻辑，不会在 `lib/` 下额外产出 `.css` 文件。改样式后要重新构建（`dev:web` 会在编辑时重建客户端 bundle）。
+输出 `lib/client.js`：`format: 'cjs'`、`platform: 'browser'`，文件头是 `window.__ModuleLoader__.load({ id, factory })` 的注册包装。所有上述 CSS（除 `?inline`）都被内联进这个 bundle 的执行逻辑，不会在 `lib/` 下额外产出 `.css` 文件。
+
+改样式后的验证路径要分清：快速热更新目前只有 Web 调试路径有（`dev:web` 用 tsc / tsdown / vite 的常驻 watch 在编辑时重建客户端 bundle）；桌面端 `dev:desktop` 是构建后启动，改完要重新构建再启动，CSS 的最终验收在桌面端。
 
 ## 8. 排查清单
 
