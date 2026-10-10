@@ -7,6 +7,10 @@ kind: 'customization-note'
 
 本分支对应 `codex/acasx-3-host-remote`。产品要同时存在「日常监管」「心盾」两个业务对话类型和一个全局「主对话」，它们在能力上由 agent preset 区分，在会话上各自拥有独立工作目录。
 
+产品交付目标是桌面端：Electron 壳运行完整 dsh 运行时的同一个 `web-app` bundle（profile `desktop`），所以本类的客户端插件与 Remote 在桌面端生效。下文出现的「浏览器半边」指客户端半边，不是「只在网页里运行」。
+
+开发工作流要区分两条路径：快速热更新验证目前只有 Web 调试路径有（`dev:web` 常驻 watch，改客户端代码会重建 bundle）；桌面端 `dev:desktop` 是构建后启动，改代码要重新构建再启动。因此日常快速迭代可以在 Web 上做，功能验收以桌面端为准。
+
 ## 机制一：对话差异用 agent preset 表达
 
 每个场景是一份 `@deepseek-ai/dsh-agent-preset` 声明，放在 `packages/bundle/web-app/presets/` 下，由 bundle 的 `files`/`exports` 发布，组合里以 `insert` 追加 `preset-richang-jianguan`、`preset-xindun` 两行。
@@ -113,7 +117,7 @@ demo 阶段业务树用组件内 mock，会话接入真实 dsh 数据的方式�
 
 ## 验证与已知限制
 
-- 端到端链路需要在真实 Web 组合里跑：侧栏展开场景 → 新建会话 → 会话出现在该场景下 → hero 标题显示场景名。
+- 端到端链路需要在真实桌面端组合里跑（或 Web 调试组合；两者共用同一套 `web-app` bundle）：侧栏展开场景 → 新建会话 → 会话出现在该场景下 → hero 标题显示场景名。
 - `packages/client/acasx/tests/hero.client.spec.ts` 覆盖 preset 到标题的映射；场景目录解析属于 Host 文件系统行为，需要在 Host 面验证。
 - 当前会话归属是按 `cwd` 反推的 demo 方案；业务阶段应改为自有存储里的 `sessionId → (罪犯, 场景)` 映射，并预留 `ownerId`。
 - `verify-package-dependencies` 对 `dshHomePath` 的重复安全分类尚未过门禁，需要人工复核后加入白名单。
