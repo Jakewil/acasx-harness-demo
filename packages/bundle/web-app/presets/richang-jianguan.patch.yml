@@ -1,0 +1,30 @@
+# ACAS.X 场景 preset：日常监管（最小版）。
+#
+# 目前只给最小可用组合（人设 + 仓库指令 + 时间上下文 + 文件读写检索），
+# 先让「＋ 新建会话 → 暂存 preset → 打开」这条链路跑通；
+# 业务工具（规则试算、档案检索、风险评估等）随后按场景往里加。
+- insert:
+    - id: preset-richang-jianguan
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: richang-jianguan
+        name: 日常监管
+        order: 20
+        hidden: true
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: 你是负责罪犯日常监管工作的助手。
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false

@@ -1,0 +1,29 @@
+# ACAS.X 场景 preset：心盾（最小版）。
+#
+# 与日常监管同样是"最小可用组合"，两者当前唯一的差别是人设文案；
+# 等业务工具就绪，再把各自专属的工具集加进来，届时两个 preset 才会真正分化。
+- insert:
+    - id: preset-xindun
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: xindun
+        name: 心盾
+        order: 21
+        hidden: true
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: 你是负责罪犯心理评估（心盾）工作的助手。
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false

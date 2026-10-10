@@ -14,6 +14,9 @@ export const DSH_HOME_DIR_NAME = '.dsh'
 /** Stable user-facing display form for the default DeepSeek Harness home. */
 export const DEFAULT_DSH_HOME_DISPLAY = `~/${DSH_HOME_DIR_NAME}`
 
+/** Directory name for the ACAS.X product home under the operating-system home. */
+export const ACASX_HOME_DIR_NAME = '.acasx'
+
 /** Environment variable that overrides the default DeepSeek Harness home. */
 export const DSH_HOME_ENV = 'DSH_HOME'
 
@@ -88,6 +91,22 @@ export function resolveDshHome(configured?: string, env: Record<string, string |
   const fromEnv = env[DSH_HOME_ENV]
   const selected = configured ?? (fromEnv !== undefined && fromEnv.trim().length > 0 ? fromEnv : defaultDshHome())
   return resolve(expandHomePath(selected))
+}
+
+/**
+ * Point a blank `DSH_HOME` at the ACAS.X product home (`~/.acasx`).
+ *
+ * A plain dsh installation keeps `~/.dsh`; an ACAS.X product launch calls this
+ * at its entry point so its runtime, skills, sessions, credentials, and
+ * workspaces never read or write a user's official installation. An explicit
+ * `DSH_HOME` still wins, so the repository-local development home is
+ * unaffected.
+ * @param env - environment mapping to update; defaults to `process.env`.
+ */
+export function applyAcasxHomeDefault(env: NodeJS.ProcessEnv = process.env): void {
+  const current = env[DSH_HOME_ENV]
+  if (current !== undefined && current.trim().length > 0) return
+  env[DSH_HOME_ENV] = join(homedir(), ACASX_HOME_DIR_NAME)
 }
 
 /**

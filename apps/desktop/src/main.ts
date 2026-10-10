@@ -1,6 +1,10 @@
 import type { ProductEventMap, ProductEvent } from '@deepseek-ai/dsh-client-product-analytics/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
+import { applyAcasxHomeDefault } from '@deepseek-ai/dsh-home-paths'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
+
+// ACAS.X 产品默认 home：官方 dsh 用 ~/.dsh，本 fork 用 ~/.acasx；显式 DSH_HOME 优先。
+applyAcasxHomeDefault()
 
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'

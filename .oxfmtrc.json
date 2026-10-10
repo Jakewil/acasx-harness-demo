@@ -1,0 +1,24 @@
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "printWidth": 140,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "objectWrap": "preserve",
+  "experimentalOperatorPosition": "start",
+  "endOfLine": "lf",
+  "proseWrap": "preserve",
+  "sortPackageJson": false,
+  "sortTailwindcss": false,
+  "ignorePatterns": [
+    "*",
+    "!packages/",
+    "packages/*",
+    "!packages/client/",
+    "packages/client/*",
+    "!packages/client/acasx/",
+    "!packages/client/acasx/**"
+  ]
+}
