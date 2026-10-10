@@ -71,6 +71,10 @@ export function apply(ctx: ClientContext): void {
       if (id === 'plugins' || id === 'schedules') ctx.get('productAnalytics')?.track('sidebar_menu_click', { menu_name: id === 'plugins' ? 'plugin' : 'cron' })
       ctx.layout.selectPanel(id)
     },
+    // ACAS.X 产品化：新建会话发生在「日常监管 / 心盾」场景内部，外壳顶部的
+    // 通用新会话按钮不出现。这里先固定关闭；若将来需要按 profile 开关，
+    // 把此处改成读取插件 Config 字段即可（其余代码不用动）。
+    showNewSession: false,
     hooks: { panels, shortcuts: ctx.shortcuts.catalog },
   })
   ctx.slots.inject('sidebar', () => ctx.slots.register({

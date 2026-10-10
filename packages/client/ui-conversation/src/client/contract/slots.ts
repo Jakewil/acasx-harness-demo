@@ -329,6 +329,12 @@ export type ConvViewProps = PropsRuntime<'conversation.view'>
 export interface ConversationInjected {
   /** Connect and open a blank Session in the selected Workspace. */
   selectWorkspace: (workspaceId: WorkspaceId) => Promise<void>
+  /**
+   * 是否允许通过 hero 工作区 chip 切换工作区。`false` 且已选中工作区时，
+   * chip 置灰锁定；未提供按 `true` 处理。冷启动尚未选中工作区时，
+   * chip 和 composer 入口仍可完成首次选择。
+   */
+  workspaceSwitchEnabled?: boolean
   /** Session-addressed composer block source, or the stable absent source. */
   hooks: { composerBlock: ObservableSnapshot<ComposerBlock | undefined> }
 }

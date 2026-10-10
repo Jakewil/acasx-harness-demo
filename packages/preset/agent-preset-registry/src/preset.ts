@@ -6,6 +6,8 @@ export interface AgentPreset {
   readonly name?: string
   readonly description?: string
   readonly order?: number
+  /** Internal composition the user-facing roster and pickers omit. */
+  readonly hidden?: boolean
   readonly broken?: string
 }
 

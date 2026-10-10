@@ -44,6 +44,11 @@ export interface AgentPresetOption {
   name?: string
   /** One sentence on what the preset is for. */
   description?: string
+  /**
+   * True for an internal composition: its name still resolves for the chip and
+   * header label, but no picker or roster offers it as a choice.
+   */
+  hidden?: boolean
 }
 
 /** Whether a shipped preset requires the Coding Tools preference.
@@ -117,12 +122,13 @@ export async function beginRosterRead<S extends { status: string; error: string 
  * @returns one option per selectable preset, in roster order.
  */
 export function presetOptions(
-  presets: readonly { id: string; name?: string; description?: string; broken?: string }[],
+  presets: readonly { id: string; name?: string; description?: string; broken?: string; hidden?: boolean }[],
 ): AgentPresetOption[] {
   return presets.filter(preset => preset.broken === undefined).map(preset => ({
     id: preset.id,
     ...preset.name === undefined ? {} : { name: preset.name },
     ...preset.description === undefined ? {} : { description: preset.description },
+    ...preset.hidden === undefined ? {} : { hidden: preset.hidden },
   }))
 }
 

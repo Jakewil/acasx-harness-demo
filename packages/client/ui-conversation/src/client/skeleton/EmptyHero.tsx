@@ -25,20 +25,21 @@ export function workspaceLabel(cwd: string): string {
 }
 
 /**
- * The workspace chip (folder + label + chevron), always interactive: before
- * the first message the workspace stays switchable — picking another one
- * moves the New Session flow to that workspace's blank session. Without a
- * label the chip renders its placeholder state: closed folder + the
- * "Choose workspace" call to action.
- * @param props.label - chip label (see {@link workspaceLabel}); omitted → placeholder.
- * @param props.menuOpen - menu expansion echo.
- * @param props.onClick - menu toggle.
- * @returns the chip button element.
+ * 工作区 chip（文件夹 + 名称 + chevron）。默认在首条消息前保持可切换，
+ * 选中另一工作区会把新会话流程移到该工作区的空白会话。`disabled` 渲染置灰
+ * 锁定态：保留当前工作区名称，不显示 chevron，也不提供菜单。无名称时渲染
+ * 占位态：闭合文件夹 +“选择工作区”引导。
+ * @param props.label - chip 名称（见 {@link workspaceLabel}）；省略时显示占位态。
+ * @param props.menuOpen - 菜单展开回显。
+ * @param props.disabled - 置灰锁定态；仅保留当前工作区名称。
+ * @param props.onClick - 菜单切换。
+ * @returns chip 按钮元素。
  */
-export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }: {
+export function WorkspaceChip({ buttonRef, label, menuOpen = false, disabled = false, onClick, t }: {
   buttonRef?: RefObject<HTMLButtonElement>
   label?: string | undefined
   menuOpen?: boolean
+  disabled?: boolean
   onClick?: () => void
   t: HeroTranslate
 }) {
@@ -47,16 +48,15 @@ export function WorkspaceChip({ buttonRef, label, menuOpen = false, onClick, t }
       ref={buttonRef}
       type="button"
       className={css.workspace}
-      aria-label={t('hero.chooseWorkspace')}
-      aria-haspopup="menu"
-      aria-expanded={menuOpen}
-      onClick={onClick}
+      aria-label={disabled ? (label ?? t('hero.chooseWorkspace')) : t('hero.chooseWorkspace')}
+      {...(disabled ? { disabled: true } : { 'aria-haspopup': 'menu' as const, 'aria-expanded': menuOpen })}
+      onClick={disabled ? undefined : onClick}
     >
       {label === undefined
         ? <IconFolderCloseRegular className={css.folder} size={16} />
         : <IconFolderOpenRegular className={css.folder} size={16} />}
       <span className={css.workspaceLabel}>{label ?? t('hero.chooseWorkspace')}</span>
-      <IconChevronDownOutlineRegular className={css.chevron} size={12} />
+      {!disabled && <IconChevronDownOutlineRegular className={css.chevron} size={12} />}
     </button>
   )
 }

@@ -138,6 +138,8 @@ function mount(
     nestedSubagent?: boolean
     /** A composer block another plugin raised for this session. */
     composerBlock?: { reason: string }
+    /** 关闭 hero chip 的工作区切换，用于置灰锁定态用例。 */
+    workspaceSwitchEnabled?: boolean
     /** Mutable view ledger used by registration-order regressions. */
     viewTabs?: ViewTab[]
   } = {},
@@ -352,7 +354,10 @@ function mount(
     )) as ConversationContentProps['useFactorySlot']
     return (
       <FactoryViewsTestContext.Provider value={common}>
-        <ConversationContent {...({ ...common, ...runtimeProps, ...input, useFactorySlot })} />
+        <ConversationContent {...({
+          ...common, ...runtimeProps, ...input, useFactorySlot,
+          ...(options.workspaceSwitchEnabled === undefined ? {} : { workspaceSwitchEnabled: options.workspaceSwitchEnabled }),
+        })} />
       </FactoryViewsTestContext.Provider>
     )
   }) as ConversationSlotProps['renderFactorySlot']
@@ -676,7 +681,7 @@ describe('ConversationRoot resident composer', () => {
     expect(b.view.getByText('one')).toBeTruthy()
   })
 
-  it('blank session keeps the interactive picker chip (workspace switchable until the first message)', () => {
+  it('blank session keeps the interactive picker chip when workspace switching is enabled', () => {
     const b = mount(sessionSnapshotOf({ blank: true }))
     const chip = b.view.getByRole('button', { name: '选择工作区' })
     expect((chip as HTMLButtonElement).disabled).toBe(false)
@@ -684,6 +689,22 @@ describe('ConversationRoot resident composer', () => {
     // The agent-preset chip sits in the same row, for the same reason: both
     // choices are only open before the first message.
     expect(b.slotCalls).toContain('conversation.hero.agentPreset')
+  })
+
+  it('locks the selected hero workspace chip to a dimmed echo while the picker slot stays mounted', () => {
+    const b = mount(
+      sessionSnapshotOf({ blank: true }),
+      [{ ...workspace('one'), sessionIds: [SID] }],
+      undefined,
+      { workspaceSwitchEnabled: false },
+    )
+    const chip = b.view.getByRole('button', { name: 'one' })
+    expect((chip as HTMLButtonElement).disabled).toBe(true)
+    expect(chip.querySelector('[class*="chevron"]')).toBeNull()
+    fireEvent.click(chip)
+    const owner = b.pickerOwner() as { open: boolean }
+    expect(owner.open).toBe(false)
+    expect(b.slotCalls).toContain('conversation.hero.workspace')
   })
 
   it('prompt failure renders the promptError strip (ordinary failure, no transaction UI)', () => {

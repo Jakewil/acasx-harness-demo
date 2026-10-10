@@ -327,6 +327,9 @@ export function apply(ctx: Context, config: Config = Config({})): void {
       hooks: {
         composerBlock: sessionId === undefined ? ABSENT_BLOCK : composerBlocks.storeFor(sessionId),
       },
+      // ACAS.X 产品化：主工作区固定后不再提供切换入口。冷启动尚未选中工作区时，
+      // `ConversationContent` 仍保留 chip 与 composer 两条首次选择路径。
+      workspaceSwitchEnabled: false,
       selectWorkspace: workspaceId => workspaceNavigation.openWorkspace(workspaceId, (nextId) => {
         if (sessionId !== undefined && nextId !== sessionId) {
           const from = inputHub.shell(sessionId)
