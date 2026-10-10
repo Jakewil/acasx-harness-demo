@@ -21,6 +21,8 @@ antd 本身是运行时组件库，可以随插件 bundle 一起打包，但要�
 
 同一入口用 `resolveId` 把 `yaml` 强制解析到 `yaml/browser`：tsdown 下 `yaml` 的 `exports` 会落到 node 构建，客户端 bundle 会留下 `require("process")`，浏览器端直接报错。
 
+CSS Modules、全局 CSS、`?inline`、UnoCSS 虚拟模块与 antd 运行期样式这五类样式的完整编译、注入、归属与清理链路，见 [client-css-pipeline.md](../client-css-pipeline.md)。
+
 ## 机制二：antd 的 locale 与容器
 
 `AcasxCapabilitiesButton` 用 `ConfigProvider` 包住 `Modal`，按 `document.documentElement.lang` 在 `zh_CN`/`en_US` 之间选 antd locale；页面文案仍走本包 locale 字典，antd 只负责组件内部文案。
