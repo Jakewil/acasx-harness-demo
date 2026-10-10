@@ -49,6 +49,31 @@ resolveScenarioWorkspace → ctx.workspaces.create({ path }) → ctx.remote.sess
 
 demo 阶段业务树用组件内 mock，会话接入真实 dsh 数据的方式是按场景 `cwd` 全等过滤 `useSessions` 列表；展开节点时先向 Host 解析目录再过滤。
 
+## 候选方案与取舍
+
+这类需求有三个独立决策点：对话类型放在哪一层、侧栏怎么替换、场景目录由谁决定。每个点都有更省事或更彻底的候选，逐一对比后落在现在的组合上。
+
+| 决策点 | 候选方案 | 不采用的原因 |
+| --- | --- | --- |
+| 表达对话类型 | 扩展 `SessionHeader` 或会话元数据 | 这是持久化格式：上游读不了要迁移，业务分类写进核心格式后每次上游改格式都要跟，风险最高 |
+| 表达对话类型 | 为每个类型 fork agent loop | 产品差异固化成核心分叉，改 loop 属于高风险变更；仓库要求新行为挂扩展点 |
+| 表达对话类型 | 用 agent preset | 选中：preset 是既有的会话组合入口，能力差异落在组合配置里，loop 与持久化都不动；`hidden` 只把它从选择器里收起 |
+| 侧栏呈现 | 禁用 `ui-workspace`，自建浏览区 | `ui-workspace` 同时提供 `uiWorkspace` 服务，十多个插件注入它；禁用会让整片 UI 停在 pending，还丢掉会话浏览、重命名、归档 |
+| 侧栏呈现 | 阴影覆盖 `sidebar.workspaces` | 选中：保留服务提供者，只替换渲染位；代价是上游浏览能力暂时不可见，业务阶段按需回补 |
+| 会话归属 | 现在就上自有存储的 `sessionId → (罪犯, 场景)` | 这是目标形态，但 demo 阶段还没有业务存储；先用同一场景目录的 `cwd` 全等做临时映射，范围局限在目录内 |
+| 场景目录 | 浏览器自己拼绝对路径 | 路径语义、平台差异、沙箱与权限边界应由 Host 拥有；浏览器拼路径在 Windows、权限、符号链接上不可靠 |
+| 场景目录 | Host 侧自建 Remote 服务 | 选中：浏览器只消费路径，Host 负责 `$DSH_HOME` 解析与建目录，与现有 Remote API 的职责边界一致 |
+| Remote 命名空间 | 加进 `api-remotes` 外观 | 会形成 `api/remotes → acasx → ui-workspace → api/remotes` 的工程引用环 |
+| Remote 命名空间 | 本包自挂载 | 选中：引用方向保持单向；代价是客户端要自己 `$mount`，并在声明了 `inject` 的子作用域里访问 |
+| 会话创建 | `remote.session.create({ cwd })` 只传 cwd | 会话没有归属 Workspace，输入被禁用、hero 停在「选择工作区」；只给 cwd 是 demo 早期踩过的坑 |
+| 会话创建 | 先注册 Workspace 再建会话，建完 refresh | 选中：Workspace 是会话归属的正式载体；Remote 创建绕过本地记录，refresh 才能把 Host 权威列表拉回来 |
+| 主对话 | 与罪犯场景共用类型和过滤 | 主对话是全局单例、固定 preset、不参与罪犯过滤；共用会把两套语义混在一起 |
+| 主对话 | 独立 `MainConversation*` 建模 | 选中：把「全局单例」写进类型与生命周期，避免后续误用 |
+
+选这套组合的总理由：所有产品差异都落在「preset 配置 + 自建 Host 服务 + 槽位占用」三类扩展点上，不改 agent loop、不改持久化格式、不禁用提供服务的插件。代价是产品侧要自己承担场景会话的编排顺序，以及阴影覆盖带来的上游浏览能力缺口。
+
+这套组合的已知成本与遗留：`cwd` 反推会话归属是临时方案，业务阶段要换成自有存储映射并预留 `ownerId`；双面包要同时挂 host/client 两个 tsconfig，漏一处 Typert 就生成不出 Remote 产物；自挂载命名空间让客户端多一层 `$mount` 与 dispose 生命周期。
+
 ## 改动文件（上游侵入清单）
 
 | 文件 | 改动 |
