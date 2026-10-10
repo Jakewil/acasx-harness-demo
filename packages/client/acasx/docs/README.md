@@ -59,7 +59,7 @@ kind: 'development-guide'
 
 被否掉的候选是：`@unocss/vite` 接到 `apps/web`、改上游构建、只用手写 CSS、运行期扫 DOM、依赖宿主收集插件 CSS、换组件库。
 
-代价：`lib/client.js` 约 4.9 MB（gzip 约 0.9 MB）；运行期注入 `<style>` 在严格 CSP 下要处理 nonce；`uno.config.ts` 目前未被 tsdown 插件加载，自定义规则尚未生效。完整对比见 [04-uno-antd-adaptation.md](customization/04-uno-antd-adaptation.md)。
+代价：`lib/client.js` 约 4.9 MB（gzip 约 0.9 MB）；运行期注入 `<style>` 在严格 CSP 下要处理 nonce；`uno.config.ts` 已由 tsdown 插件加载，`postprocess` 会把工具类选择器提权为 `body:not(#\#) .x`，改配置后要在桌面端回归。完整对比见 [04-uno-antd-adaptation.md](customization/04-uno-antd-adaptation.md)。
 
 ## 工程化与本地开发要点
 

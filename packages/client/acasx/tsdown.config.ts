@@ -3,8 +3,9 @@ import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { UserConfig } from 'tsdown'
-import { createGenerator, presetWind3 } from 'unocss'
+import { createGenerator } from 'unocss'
 import { clientBundle } from '../tsdown.client.ts'
+import unoConfig from './uno.config.ts'
 
 const packageRootUrl = new URL('.', import.meta.url)
 const packageRoot = fileURLToPath(packageRootUrl)
@@ -13,9 +14,7 @@ const yamlBrowser = join(dirname(require.resolve('yaml/package.json')), 'browser
 const UNO_VIRTUAL = '\0acasx-uno.mjs'
 const UNO_TAG = 'acasx-uno'
 
-const uno = createGenerator({
-  presets: [presetWind3()],
-})
+const uno = createGenerator(unoConfig)
 
 /** 把生成的 UnoCSS 文本包装成执行期注入 style 的模块。 */
 function unoInjection(css: string): string {
