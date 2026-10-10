@@ -172,22 +172,6 @@ export function applyAcasxHomeDefault(env: NodeJS.ProcessEnv = process.env): voi
 }
 
 /**
- * Point a blank `DSH_HOME` at the ACAS.X product home (`~/.acasx`).
- *
- * A plain dsh installation keeps `~/.dsh`; an ACAS.X product launch calls this
- * at its entry point so its runtime, skills, sessions, credentials, and
- * workspaces never read or write a user's official installation. An explicit
- * `DSH_HOME` still wins, so the repository-local development home is
- * unaffected.
- * @param env - environment mapping to update; defaults to `process.env`.
- */
-export function applyAcasxHomeDefault(env: NodeJS.ProcessEnv = process.env): void {
-  const current = env[DSH_HOME_ENV]
-  if (current !== undefined && current.trim().length > 0) return
-  env[DSH_HOME_ENV] = join(homedir(), ACASX_HOME_DIR_NAME)
-}
-
-/**
  * Join path segments onto the resolved DeepSeek Harness home.
  * @param segments - path segments appended to the Harness home; an empty list returns the home itself.
  * @returns the normalized absolute joined path.
