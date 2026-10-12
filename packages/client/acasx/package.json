@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-client-acasx",
-  "version": "0.2.1-alpha.1",
+  "version": "0.2.1-alpha.2",
   "description": "ACAS.X product surface for the Web client: brand wordmark, business module navigation, and the case-file panel",
   "publishConfig": {
     "access": "public"

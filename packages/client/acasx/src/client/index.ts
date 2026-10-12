@@ -83,7 +83,7 @@ export async function apply(ctx: ClientContext): Promise<() => Promise<void>> {
  * @param ctx - 客户端根上下文。
  */
 function registerAcasxUi(ctx: ClientContext): void {
-  ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, AcasxBrandName))
+  ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name', priority: -1 }, AcasxBrandName))
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'acasx: locale')
 
   ctx.slots.inject('conversation.hero.headline', () =>
