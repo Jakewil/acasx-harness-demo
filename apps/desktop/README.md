@@ -243,6 +243,8 @@ The macOS arm64 command requires Apple Silicon. The macOS x64 command runs on In
 
 Each target owns its packed package inputs, prepared runtime, package set, dsh tree, pnpm preparation state, unpacked application, update metadata, and final artifacts under `apps/desktop/.desktop-build/targets/<target>/`. The Electron archive cache remains shared under `.desktop-build/downloads` because every archive name includes its version, platform, and architecture and is verified before extraction. A target build never consumes another target's mutable preparation state.
 
+Linux package commands explicitly select the Debian `deb` target for the electron-builder invocation and write it under `apps/desktop/.desktop-build/targets/<target>/unsigned-artifacts/`, using the same target-owned layout as Windows and macOS. The source configuration keeps its existing AppImage target unchanged. Run the command on a Linux host whose architecture matches the target; Docker is not required.
+
 ### Local macOS DMG without release signing
 
 After `pnpm install`, run one command from the repository root. No `.env.macos`, Apple account, certificate, or update service configuration is required:

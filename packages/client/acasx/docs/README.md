@@ -24,6 +24,7 @@ kind: 'development-guide'
 | [customization/04-uno-antd-adaptation.md](customization/04-uno-antd-adaptation.md) | tsdown 内生成 UnoCSS、antd 组件库接入 | 学「组件库与原子 CSS 适配」 |
 | [client-css-pipeline.md](client-css-pipeline.md) | 五类 CSS 的编译、注入、归属与清理链路 | 调样式、排查样式不生效 |
 | [productization-assessment.md](productization-assessment.md) | 工程化基线、登录接管与上游破坏性升级的评估与路线 | 做产品化决策 |
+| [desktop-packaging-and-runtime.md](desktop-packaging-and-runtime.md) | Linux 打包、运行时准备、Office 引擎、CLI 启动器与 acasx 启动修复 | 排查 Linux 安装包、启动失败与目标文件职责 |
 
 ## 四类定制主线
 
@@ -72,6 +73,7 @@ kind: 'development-guide'
 | 格式化 | 产品包自有 oxfmt/oxlint，根配置只放行 acasx，上游文件不重排 |
 | 依赖 | 产品依赖只在 acasx 包；挂载产品包必须同时声明 bundle `dependencies` |
 | 升级 | 按「上游触碰清单」检查，先 `build:lib:client`，再聚焦测试与快照 |
+| Linux 桌面打包 | 入口、运行时、Office 引擎和启动修复的文件级说明见 [desktop-packaging-and-runtime.md](desktop-packaging-and-runtime.md) |
 
 完整命令、已知门禁问题与升级步骤见 [engineering-and-local-development.md](engineering-and-local-development.md)。
 

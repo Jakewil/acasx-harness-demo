@@ -245,6 +245,8 @@ macOS arm64 命令要求 Apple Silicon。macOS x64 命令可以在 Intel macOS �
 
 每个目标都在 `apps/desktop/.desktop-build/targets/<target>/` 下持有自己的打包输入、已准备运行时、包集合、dsh 依赖树、pnpm 准备状态、未打包应用、更新元数据和最终产物。Electron 归档缓存继续由 `.desktop-build/downloads` 共享，因为每个归档文件名都包含版本、平台和架构，并且在解包前经过验证。目标构建绝不读取其他目标的可变准备状态。
 
+Linux 打包命令在 electron-builder 调用中显式选择 Debian `deb` target，并在 `apps/desktop/.desktop-build/targets/<target>/unsigned-artifacts/` 下生成安装包，与 Windows、macOS 使用相同的 target 目录约定。源码配置原有的 AppImage target 保持不变。命令需要运行在与目标架构一致的 Linux 主机上，不依赖 Docker。
+
 ### 无发布签名的本地 macOS DMG
 
 执行 `pnpm install` 后，在仓库根目录运行一条命令即可，无需 `.env.macos`、Apple 账号、证书或更新服务配置：

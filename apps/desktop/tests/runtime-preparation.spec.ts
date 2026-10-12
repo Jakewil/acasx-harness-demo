@@ -8,7 +8,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   root: '',
-  target: 'mac-arm64' as 'mac-arm64' | 'mac-x64' | 'win-x64',
+  target: 'mac-arm64' as 'mac-arm64' | 'mac-x64' | 'win-x64' | 'linux-x64' | 'linux-arm64',
   pnpm: '11.7.0' as string | undefined,
   failure: undefined as 'electron' | 'primary' | 'cli' | undefined,
   preparePrimary: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock('../scripts/prepare-command-link.ts', () => ({ prepareCommandLink: state
 // The compiled command manager is a build input; all source resource copies use real files.
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs')>()
-  return { ...actual, cpSync: (...args: Parameters<typeof actual.cpSync>) => {
+  return { ...actual, chmodSync: () => {}, cpSync: (...args: Parameters<typeof actual.cpSync>) => {
     if (String(args[0]).endsWith(join('lib', 'command-manager-entry.js'))) {
       if (state.failure === 'cli') throw new Error('command manager copy failed')
       actual.writeFileSync(args[1], 'command manager fixture')
@@ -61,8 +61,9 @@ beforeEach(() => {
     mkdirSync(pnpm, { recursive: true })
     writeFileSync(join(pnpm, 'pnpm.mjs'), '')
     writeFileSync(join(root, 'runtime.json'), JSON.stringify({
-      desktopVersion: '1.0.0', platform: state.target === 'win-x64' ? 'win32' : 'darwin',
-      arch: state.target === 'mac-arm64' ? 'arm64' : 'x64',
+      desktopVersion: '1.0.0',
+      platform: state.target === 'win-x64' ? 'win32' : state.target.startsWith('linux-') ? 'linux' : 'darwin',
+      arch: state.target.endsWith('-arm64') ? 'arm64' : 'x64',
       python: '3.12.14', node: '24.17.0', pnpm: state.pnpm, pythonPackages: { numpy: '2.3.5' },
     }))
   })
@@ -74,9 +75,10 @@ afterEach(async () => {
   await rm(state.root, { recursive: true, force: true, maxRetries: 20, retryDelay: 50 })
 })
 
-it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('prepares %s with one pnpm distribution and its CLI resources', async (target) => {
+it.each(['mac-arm64', 'mac-x64', 'win-x64', 'linux-x64', 'linux-arm64'] as const)('prepares %s with one pnpm distribution and its CLI resources', async (target) => {
   state.target = target
   const windows = target === 'win-x64'
+  const linux = target.startsWith('linux-')
   if (windows) process.argv.push('--defer-primary-runtime-smoke')
   const runtime = join(state.root, 'runtime')
   mkdirSync(join(runtime, 'pnpm'), { recursive: true })
@@ -91,7 +93,7 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('prepares %s with one pnpm
     schemaVersion: 1, node: '24.18.1', pnpm: '11.7.0',
   })
   expect(state.preparePrimary).toHaveBeenCalledWith({ deferSmoke: windows })
-  if (windows) expect(state.commandLink).not.toHaveBeenCalled()
+  if (windows || linux) expect(state.commandLink).not.toHaveBeenCalled()
   else expect(state.commandLink).toHaveBeenCalledWith(join(runtime, 'cli'), target === 'mac-arm64' ? 'arm64' : 'x64', '12.0')
 })
 

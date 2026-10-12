@@ -5,9 +5,23 @@ kind: 'package-reference'
 
 # @deepseek-ai/dsh-client-acasx
 
-## 概述
+<a id="summary"></a>
+
+## Summary
 
 `dsh-client-acasx` 承载 ACAS.X 在 dsh 客户端之上的产品面。桌面端 Electron 加载完整 dsh 运行时的同一个 `web-app` bundle（profile `desktop`），客户端插件与页面由它加载；Web 入口保留用于本地调试，不是交付目标。本包替换侧栏品牌字标，用业务树接管左侧栏的浏览区域，并在侧栏顶部注册业务模块入口，每个入口打开自己的主面板。
+
+## Table of Contents
+
+- [Summary](#summary)
+- [使用方式](#usage)
+- [当前状态](#current-state)
+- [产品化技术方案](#productization)
+- [Dev Note](#dev-note)
+- [Model Experience](#model-experience)
+- [Known Limitations and Deferred Work](#known-limitations-and-deferred-work)
+
+<a id="usage"></a>
 
 ## 使用方式
 
@@ -38,6 +52,8 @@ Skills 走现成的 `skills/list` Remote。MCP 当前从 `agentPresets/read` 返
 
 `sidebar.workspaces` 是 `single` 槽位：同一 `priority` 下重复注册会抛错，不同 `priority` 之间是阴影关系，**最低者渲染**。因此本包保留上游 `ui-workspace` 继续提供服务，只在更低优先级占住渲染位。
 
+<a id="current-state"></a>
+
 ## 当前状态
 
 左侧业务树的罪犯名单仍是组件内的 mock（11 名罪犯、每名固定三个模块），尚未接入业务后端。会话已经接真实 dsh 数据：展开一个（罪犯, 场景）节点时，浏览器先向 Host 解析该场景的工作目录，再用 `useSessions` 按 `cwd` **全等**过滤出属于它的会话行。
@@ -60,11 +76,30 @@ resolveScenarioWorkspace → ctx.workspaces.create({ path }) → ctx.remote.sess
 
 场景目录落在 ACAS.X 自己的产品 home 下：产品启动入口把空的 `DSH_HOME` 兜底成 `~/.acasx`（官方 dsh 仍是 `~/.dsh`，显式 `DSH_HOME` 优先），因此实际路径是 `~/.acasx/workspaces/<id>-<姓名>/<场景>`。
 
-## 已知限制与待办
-
-- 罪犯与模块数据需要改为来自业务后端；现状用 cwd 反推会话归属，业务阶段应改为我们自己的 `sessionId → (罪犯, 场景)` 映射。
-- 右侧「档案完整度」面板尚未实现，计划通过 `sidebarRightTabs` 注册一个新的 tab 类型。
+<a id="productization"></a>
 
 ## 产品化技术方案
 
 本包当前实现只用于验证 dsh 的接入机制，不是产品代码基线。工程化基线、功能扩展、登录接管与上游破坏性升级的完整评估见 [docs/productization-assessment.md](docs/productization-assessment.md)。
+
+### Dev Note
+
+<details>
+<summary>Working context for maintainers — click to expand</summary>
+
+本包是桌面交付的产品面，不是通用上游包。新增产品行为应优先落在本包和 acasx 自有文档中，避免把产品分支扩散到上游 UI 包。Linux 打包、运行时准备、Office 引擎和启动修复的文件职责见 [docs/desktop-packaging-and-runtime.md](docs/desktop-packaging-and-runtime.md)。
+
+</details>
+
+## Model Experience
+
+None, as this package registers product UI slots and a scenario-path Remote service without contributing model context or Session events.
+
+#### KV Cache effect
+
+None. The scenario-path Remote resolves paths and creates directories; it does not assemble or mutate model requests.
+
+## Known Limitations and Deferred Work
+
+- 罪犯与模块数据需要改为来自业务后端；现状用 cwd 反推会话归属，业务阶段应改为我们自己的 `sessionId → (罪犯, 场景)` 映射。
+- 右侧「档案完整度」面板尚未实现，计划通过 `sidebarRightTabs` 注册一个新的 tab 类型。

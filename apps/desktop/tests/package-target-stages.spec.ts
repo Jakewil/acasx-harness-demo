@@ -190,6 +190,14 @@ it.each([false, true])('scopes the Apple proxy around notarization (directory=%s
   }
 })
 
+it('builds unsigned Linux through electron-builder and the packaged runtime smoke', async () => {
+  const { run, stages } = supervisor()
+  await packageTarget(parseDesktopPackageInvocation(['linux-x64', '--unsigned'], 'linux', 'x64'), environment, run)
+  expect(stages.at(-2)).toBe('exec electron-builder --config electron-builder.config.mjs --linux deb --x64 --publish never')
+  expect(stages.at(-1)).toBe('exec tsx scripts/smoke-packaged-runtime.ts --unsigned')
+  expect(writeFileSync).not.toHaveBeenCalled()
+})
+
 it('does not write a release completion record when Apple proxy cleanup fails', async () => {
   const { run } = supervisor()
   vi.mocked(withMacOSNotarizationProxy).mockRejectedValueOnce(new Error('proxy restoration failed'))
