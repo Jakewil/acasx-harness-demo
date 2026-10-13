@@ -669,6 +669,9 @@ importers:
       '@deepseek-ai/dsh-atomic-write':
         specifier: workspace:*
         version: link:../../packages/util/atomic-write
+      '@deepseek-ai/dsh-client-acasx':
+        specifier: workspace:*
+        version: link:../../packages/client/acasx
       '@deepseek-ai/dsh-client-product-analytics':
         specifier: workspace:*
         version: link:../../packages/client/product-analytics
@@ -2992,6 +2995,9 @@ importers:
       '@deepseek-ai/dsh-session':
         specifier: workspace:*
         version: link:../../core/session
+      '@deepseek-ai/dsh-workspace':
+        specifier: workspace:*
+        version: link:../../workspace/workspace
       '@types/react':
         specifier: ~18.3.1
         version: 18.3.31

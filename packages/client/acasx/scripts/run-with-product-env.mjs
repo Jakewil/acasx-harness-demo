@@ -36,7 +36,7 @@ if (typeof productTitle !== 'string' || productTitle.trim() === '') {
 console.log(`[acasx] DSH_CLIENT_TITLE = ${productTitle}`)
 console.log(`[acasx] 执行 pnpm run ${target}`)
 
-const result = spawnSync('pnpm', ['run', target], {
+const result = spawnSync('pnpm', ['run', target, ...process.argv.slice(3)], {
   cwd: repositoryRoot,
   env: { ...process.env, DSH_CLIENT_TITLE: productTitle },
   stdio: 'inherit',

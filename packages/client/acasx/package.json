@@ -13,6 +13,7 @@
   "license": "MIT",
   "files": [
     "lib/index.js",
+    "lib/account.js",
     "lib/client.js",
     "lib/types/**/*.js",
     "lib/types/**/*.d.ts",
@@ -28,6 +29,10 @@
     ".": {
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
+    },
+    "./account": {
+      "types": "./lib/types/account.d.ts",
+      "default": "./lib/account.js"
     },
     "./client": {
       "types": "./lib/types/client/index.d.ts",
@@ -50,6 +55,8 @@
   },
   "scripts": {
     "bundle": "tsdown",
+    "demo:accounts": "node --import tsx/esm scripts/account-demo.mjs",
+    "demo:accounts:watch": "node scripts/run-with-product-env.mjs dev:web --skip-build --no-serve",
     "dev:desktop": "node scripts/run-with-product-env.mjs dev:desktop",
     "dev:web": "node scripts/run-with-product-env.mjs dev:web",
     "format": "oxfmt .",
@@ -74,6 +81,7 @@
     "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
     "@deepseek-ai/dsh-client-ui-workspace": "workspace:*",
     "@deepseek-ai/dsh-session": "workspace:*",
+    "@deepseek-ai/dsh-workspace": "workspace:*",
     "@types/react": "~18.3.1",
     "antd": "^6.6.5",
     "oxfmt": "0.72.0",
@@ -88,7 +96,8 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-workspace": "workspace:*"
   },
   "dsh": {
     "client": {

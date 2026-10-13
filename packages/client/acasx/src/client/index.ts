@@ -29,8 +29,9 @@ import { ArchiveIcon, ChatIcon, ConnectorIcon, MoreIcon } from './panels/ModuleI
 import { ArchiveLibraryPage, MorePage, SkillConnectorPage } from './panels/PlaceholderPages.tsx'
 import { RuleTrialIcon } from './rule-trial/RuleTrialIcon.tsx'
 import { RuleTrialPage } from './rule-trial/RuleTrialPage.tsx'
+import { AcasxAccountAction } from './sidebar/AccountAction.tsx'
 import { AcasxSidebarTree, type AcasxSidebarInjected } from './sidebar/SidebarTree.tsx'
-import { isMainConversationPanel, MAIN_CONVERSATION_PANEL, MainConversationController } from './main-conversation.ts'
+import { isMainConversationPanel, MAIN_CONVERSATION_PANEL, MainConversationController, shouldOpenMainConversation } from './main-conversation.ts'
 import { en, NS, zh } from './locales.ts'
 
 export type { AcasxSidebarInjected } from './sidebar/SidebarTree.tsx'
@@ -151,11 +152,27 @@ function registerAcasxUi(ctx: ClientContext): void {
   ctx.slots.inject('sidebar.workspaces', () =>
     ctx.slots.register({ name: 'sidebar.workspaces', priority: -1, inject: sidebarInjected }, AcasxSidebarTree),
   )
+  ctx.slots.inject('sidebar.footer.action', () =>
+    ctx.slots.register(
+      { name: 'sidebar.footer.action', id: '@deepseek-ai/dsh-client-acasx/account', locale: NS, order: -10 },
+      AcasxAccountAction,
+    ),
+  )
 
   const mainConversation = new MainConversationController(ctx)
   ctx.effect(() => {
+    let firstReconcile = true
     const reconcile = (): void => {
-      if (!isMainConversationPanel(ctx.layout.panelInfo.getSnapshot().activePanelId)) return
+      const activePanelId = ctx.layout.panelInfo.getSnapshot().activePanelId
+      if (firstReconcile) {
+        firstReconcile = false
+        // 布局初始没有选中任何面板时，主面板回退渲染 `conversation`；这条路径也要
+        // 交给主对话控制器，否则首次进入会停在默认会话而不是固定主对话。
+        if (!shouldOpenMainConversation(activePanelId)) return
+      } else if (!isMainConversationPanel(activePanelId)) {
+        // 打开场景会话时 ui-workspace 会把 panel 切回 null；那不是主对话入口。
+        return
+      }
       void mainConversation.open().catch((reason: unknown) => {
         console.warn('打开主对话失败:', reason)
       })

@@ -24,6 +24,8 @@ export const DESKTOP_IPC = {
   deviceInfo: 'dsh-desktop:device-info',
   localeBootstrap: 'dsh-desktop:locale-bootstrap',
   localeChanged: 'dsh-desktop:locale-changed',
+  acasxAccount: 'dsh-desktop:acasx-account',
+  acasxSwitchAccount: 'dsh-desktop:acasx-switch-account',
   updatesStatus: 'dsh-desktop:updates-status',
   updatesOpen: 'dsh-desktop:updates-open',
   updatesPresentation: 'dsh-desktop:updates-presentation',
@@ -68,9 +70,29 @@ export interface DesktopUpdatePresentation {
   readonly failure?: DesktopUpdateFailureKind
 }
 
+/** Safe ACAS.X account identity exposed to the desktop renderer. */
+export interface DshDesktopAcasxAccount {
+  /** Stable account id. */
+  readonly id: string
+  /** Login username. */
+  readonly username: string
+  /** Display name. */
+  readonly displayName: string
+}
+
+/** ACAS.X account operations exposed to the desktop renderer. */
+export interface DshDesktopAcasxApi {
+  /** @returns the active ACAS.X account, or null before login. */
+  currentAccount(): Promise<DshDesktopAcasxAccount | null>
+  /** Stop the current Host and return to the ACAS.X login gate. */
+  switchAccount(): Promise<void>
+}
+
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
 export interface DshDesktopProductApi {
   readonly protocolVersion: 1
+  /** ACAS.X account bridge; absent in plain dsh builds. */
+  readonly acasx?: DshDesktopAcasxApi
   readonly browser: DesktopBrowserBridge
   readonly keyboard: DesktopKeyboardApi
   readonly shortcuts: DesktopShortcutsApi

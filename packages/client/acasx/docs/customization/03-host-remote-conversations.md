@@ -39,7 +39,7 @@ resolveScenarioWorkspace → ctx.workspaces.create({ path }) → ctx.remote.sess
 
 三个步骤都有必要：只给 `cwd` 的会话没有归属 Workspace，会话页会停在「选择工作区」并禁用输入，所以目录要先注册成 Workspace；`remote.session.create` 绕过客户端 SessionManager 的本地记录，必须 `sessions.refresh()` 把 Host 权威列表拉回来；最后再打开会话。复用同目录已有的空白会话优先于新建。
 
-全局「主对话」独立建模为 `MainConversationPanel`、`MainConversationSession`、`MainConversationController`，固定 `$DSH_HOME/main-conversation` 与 `standard` preset，始终复用同一条会话，不参与罪犯场景的 `cwd` 过滤。
+全局「主对话」独立建模为 `MainConversationPanel`、`MainConversationSession`、`MainConversationController`，固定 `$DSH_HOME/main-conversation` 与 `standard` preset，始终复用同一条会话，不参与罪犯场景的 `cwd` 过滤。布局初始化时 `activePanelId` 为 `null`，主面板会回退渲染 `conversation`；本包只在首次 reconcile 时把 `null` 视为主对话入口，因此首次进入会立即打开固定主对话。之后打开场景会话时 `ui-workspace` 也会把 panel 切回 `null`，此时该值表示场景会话，不能再触发主对话，否则 mainView 会被抢回主对话，场景会话无法切换。Host 半边同时在 `Service.init` 里把 `$DSH_HOME/main-conversation` 预注册成工作区，阻止 `ui-workspace` 在空态创建系统默认工作区，使产品只保留主对话与场景工作区两条路径。
 
 ## 机制四：产品 home 与组合挂载
 

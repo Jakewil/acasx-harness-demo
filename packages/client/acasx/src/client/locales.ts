@@ -19,6 +19,10 @@ export const zh = {
   'capabilities.skill.modelInvocable': '模型可用',
   'capabilities.skill.userOnly': '仅用户',
   'capabilities.close': '关闭',
+  'account.switch': '切换账号',
+  'account.switching': '正在切换…',
+  'account.none': '未登录',
+  'account.loading': '读取账号…',
 } satisfies Record<string, string>
 
 /** 本包的 locale 键集合。 */
@@ -40,6 +44,10 @@ export const en = {
   'capabilities.skill.modelInvocable': 'Model invocable',
   'capabilities.skill.userOnly': 'User only',
   'capabilities.close': 'Close',
+  'account.switch': 'Switch account',
+  'account.switching': 'Switching…',
+  'account.none': 'Not signed in',
+  'account.loading': 'Loading account…',
 } satisfies Record<AcasxKey, string>
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {

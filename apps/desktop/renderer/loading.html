@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+    <title>ACAS.X</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; }
+      html, body { height: 100%; margin: 0; }
+      body { display: grid; place-items: center; background: #f4f5f7; color: #1f2937; }
+      main { display: grid; justify-items: center; gap: 14px; }
+      .spinner { width: 28px; height: 28px; border: 3px solid #d1d5db; border-top-color: #111827; border-radius: 50%; animation: spin 1s linear infinite; }
+      p { margin: 0; color: #4b5563; font-size: 14px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="spinner" aria-hidden="true"></div>
+      <p id="label" role="status"></p>
+    </main>
+    <script>
+      document.getElementById('label').textContent = navigator.language.toLowerCase().startsWith('zh')
+        ? '正在加载工作区…'
+        : 'Loading workspace…'
+    </script>
+  </body>
+</html>

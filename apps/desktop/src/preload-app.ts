@@ -2,7 +2,7 @@
 
 import type { DesktopShortcutInput, ShortcutConfigSnapshot, ShortcutSaveResult } from '@deepseek-ai/dsh-client-shortcuts/protocol'
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import { DESKTOP_IPC, SCHEME, type DshDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
+import { DESKTOP_IPC, SCHEME, type DshDesktopAcasxAccount, type DshDesktopProductApi, type DesktopUpdatePresentation } from './ipc.ts'
 import { PLATFORM_IPC } from './platform-ipc.ts'
 import { markDocumentPlatform, syncWindowFullscreen } from './preload-platform.ts'
 import { syncNativeTheme } from './preload-theme.ts'
@@ -13,6 +13,10 @@ import { createDesktopBrowserBridge } from './preload-browser.ts'
 function createProductApi(): DshDesktopProductApi {
   return {
     protocolVersion: 1,
+    acasx: {
+      currentAccount: () => ipcRenderer.invoke(DESKTOP_IPC.acasxAccount) as Promise<DshDesktopAcasxAccount | null>,
+      switchAccount: () => ipcRenderer.invoke(DESKTOP_IPC.acasxSwitchAccount) as Promise<void>,
+    },
     browser: createDesktopBrowserBridge(),
     deviceInfo: () => ipcRenderer.invoke(DESKTOP_IPC.deviceInfo) as Promise<string>,
     keyboard: {

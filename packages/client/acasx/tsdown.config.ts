@@ -53,7 +53,7 @@ const yamlBrowserPlugin: NonNullable<UserConfig['plugins']>[number] = {
   },
 }
 
-const base = clientBundle('@deepseek-ai/dsh-client-acasx', ['lib/types/index.js'])
+const base = clientBundle('@deepseek-ai/dsh-client-acasx', ['lib/types/index.js', 'lib/types/account.js'])
 
 export default (inlineConfig: Pick<UserConfig, 'env'>): UserConfig[] =>
   base(inlineConfig).map(config =>

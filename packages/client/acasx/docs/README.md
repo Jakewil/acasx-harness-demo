@@ -23,6 +23,7 @@ kind: 'development-guide'
 | [customization/03-host-remote-conversations.md](customization/03-host-remote-conversations.md) | 对话类型用 preset 表达、Host/Remote 双面插件、场景会话编排、产品 home | 学「多类型对话与 Host/Remote」 |
 | [customization/04-uno-antd-adaptation.md](customization/04-uno-antd-adaptation.md) | tsdown 内生成 UnoCSS、antd 组件库接入 | 学「组件库与原子 CSS 适配」 |
 | [client-css-pipeline.md](client-css-pipeline.md) | 五类 CSS 的编译、注入、归属与清理链路 | 调样式、排查样式不生效 |
+| [accounts.md](accounts.md) | 桌面多账号登录、账号目录隔离、底部账号入口、主对话初始化与 Web 调试适配器 | 做账号登录与多账号隔离 |
 | [productization-assessment.md](productization-assessment.md) | 工程化基线、登录接管与上游破坏性升级的评估与路线 | 做产品化决策 |
 | [desktop-packaging-and-runtime.md](desktop-packaging-and-runtime.md) | Linux 打包、运行时准备、Office 引擎、CLI 启动器与 acasx 启动修复 | 排查 Linux 安装包、启动失败与目标文件职责 |
 

@@ -46,6 +46,18 @@ export function isMainConversationPanel(id: MainPanelId | null): boolean {
 }
 
 /**
+ * 判断当前布局是否应交给主对话控制器。
+ *
+ * 布局初始化时没有选中任何主面板，此时主面板回退渲染 `conversation`；
+ * 这条路径同样属于主对话，否则首次进入会停在默认会话。
+ * @param id - 当前布局选中的主面板。
+ * @returns 应打开主对话时为 true。
+ */
+export function shouldOpenMainConversation(id: MainPanelId | null): boolean {
+  return id === null || isMainConversationPanel(id)
+}
+
+/**
  * 管理全局主对话：固定专用工作目录，复用其中唯一会话；没有会话时创建一条
  * 空白会话，空状态直接进入正常发起对话。
  */

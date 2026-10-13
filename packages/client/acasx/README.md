@@ -70,6 +70,10 @@ resolveScenarioWorkspace → ctx.workspaces.create({ path }) → ctx.remote.sess
 
 场景到 agent preset 的映射：日常监管 → `richang-jianguan`，心盾 → `xindun`。这两个 preset 是产品内部组合（`hidden: true`），不出现在用户可见的 Agent 预设下拉或设置 roster 里；它们只通过侧栏场景发起，会话头部/芯片按 `name` 显示“日常监管 / 心盾”。
 
+### 账号登录与多账号隔离
+
+桌面端在启动 Host 之前显示 ACAS.X 账号登录窗口。每个账号使用独立的 `DSH_HOME` 和 `DSH_AGENTS_HOME`，共用随包的 `desktop` profile；会话、设置、凭据和工作区数据按账号隔离。侧栏底部注册账号入口，显示当前账号并提供“切换账号”；Web 环境不渲染该入口。共享账号核心、桌面加载页、切换流程和 Web 调试适配器见 [docs/accounts.md](docs/accounts.md)。
+
 ### Host 与 Remote 接线
 
 本包是双面包。Host 半边 `src/index.ts` 注册 `acasxScenario` Cordis 服务并导出 `./typert`、`./remote` 生成产物；浏览器半边导入生成的 `/remote` 贡献、用 `ctx.remote.$mount()` 自挂载，再注册界面。命名空间由本包自挂载而不是加进 `api-remotes` 外观，是为了避免 `api/remotes → acasx → ui-workspace → api/remotes` 的工程引用环。
@@ -103,3 +107,5 @@ None. The scenario-path Remote resolves paths and creates directories; it does n
 
 - 罪犯与模块数据需要改为来自业务后端；现状用 cwd 反推会话归属，业务阶段应改为我们自己的 `sessionId → (罪犯, 场景)` 映射。
 - 右侧「档案完整度」面板尚未实现，计划通过 `sidebarRightTabs` 注册一个新的 tab 类型。
+- 模型对话需要可用的 `DEEPSEEK_API_KEY` 或模型网关；缺少凭据时发送消息会得到 `ACCOUNT_SIGN_IN_REQUIRED`。
+- 已有演示账号可能保留历史系统默认工作区记录；全新账号只创建主对话与场景工作区。

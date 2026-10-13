@@ -35,6 +35,7 @@
       "@deepseek-ai/dsh-experimental-session-titles-bundle": ["./packages/experimental/session-titles-bundle/src/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics": ["./packages/client/product-analytics/src/index.ts"],
       "@deepseek-ai/dsh-client-acasx": ["./packages/client/acasx/src/index.ts"],
+      "@deepseek-ai/dsh-client-acasx/account": ["./packages/client/acasx/src/account.ts"],
       "@deepseek-ai/dsh-client-acasx/client": ["./packages/client/acasx/src/client/index.ts"],
       "@deepseek-ai/dsh-client-product-analytics/types": ["./packages/client/product-analytics/src/events.ts"],
       "@deepseek-ai/dsh-client-product-analytics/client": ["./packages/client/product-analytics/src/client/index.ts"],

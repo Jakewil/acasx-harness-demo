@@ -1,6 +1,6 @@
 import type { ProductEventMap, ProductEvent } from '@deepseek-ai/dsh-client-product-analytics/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
-import { applyAcasxHomeDefault } from '@deepseek-ai/dsh-home-paths'
+import { applyAcasxHomeDefault, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
 // ACAS.X 产品默认 home：官方 dsh 用 ~/.dsh，本 fork 用 ~/.acasx；显式 DSH_HOME 优先。
@@ -64,6 +64,8 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import { createDesktopAccountSession, type DesktopAccountLogin } from './account-session.ts'
+import { openAccountLoginWindow } from './account-login-window.ts'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
@@ -330,6 +332,9 @@ async function main(): Promise<void> {
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
   const activeProject = paths.profile
   const manager = new DesktopProjectManager(paths, resources)
+  const accountSession = createDesktopAccountSession(resolveDshHome())
+  let activeAccount: DesktopAccountLogin | undefined
+  let accountHostEnvironment: NodeJS.ProcessEnv = {}
   // Dock and Finder launches inherit only launchd's environment; every Host shares one login-shell read.
   const loginShellRead = new AbortController()
   // The probe runs in its own process group, which outlives Desktop unless the read is aborted.
@@ -341,12 +346,13 @@ async function main(): Promise<void> {
     return result.environment
   })
   let hostEnvironment: NodeJS.ProcessEnv = process.env
-  const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = await loginShell }
+  const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = { ...(await loginShell), ...accountHostEnvironment } }
   let quitting = false
   let startup: Promise<void> | undefined
   let workspaceRecovery: Promise<void> | undefined
   let mainWindow: BrowserWindow | undefined
   let welcomeWindow: BrowserWindow | undefined
+  let accountLoginWindow: BrowserWindow | undefined
   let enteredWorkspace = false
   // NSIS passes --updated when it launches the application after installation.
   let raiseAfterUpdate = process.platform === 'win32' && process.argv.includes('--updated')
@@ -443,6 +449,16 @@ async function main(): Promise<void> {
     navigation = next
     return next.promise
   }
+  /** Shell-owned loading page shown between account login and workspace readiness. */
+  const loadingUrl = `${SCHEME}://shell/loading.html`
+  let openingAccountLogin: Promise<DesktopAccountLogin | undefined> | undefined
+  /** Show the ACAS.X account login gate; the app starts the Host only after it resolves. */
+  const showAccountLogin = (): Promise<DesktopAccountLogin | undefined> => {
+    if (quitting) return Promise.resolve(undefined)
+    openingAccountLogin ??= openAccountLoginWindow(accountSession, (window) => { accountLoginWindow = window })
+      .finally(() => { openingAccountLogin = undefined })
+    return openingAccountLogin
+  }
   const platformView = new DesktopPlatformView(join(app.getAppPath(), 'lib', 'preload-platform-account.cjs'),
     () => locale.id === 'zh-CN' ? 'zh_CN' : 'en_US', process.platform === 'win32' ? 'win32' : 'darwin')
   const backend = new DesktopBackendController((onFailure) => {
@@ -464,7 +480,8 @@ async function main(): Promise<void> {
         stopAccount?.()
         const accountBackend = welcomeBackend.account
         stopAccount = accountBackend.watch((state) => {
-          if (quitting) return
+          // ACAS.X 账号会话已经建立时不处理上游 DeepSeek 账号流，避免 welcome 与状态切换互相干扰。
+          if (quitting || activeAccount !== undefined) return
           if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
           const attempt = state.attempt
           if (attempt?.phase === 'waiting-browser' && attempt.authorizeUrl !== undefined && openedAttempt !== attempt.id) {
@@ -491,7 +508,7 @@ async function main(): Promise<void> {
           // The stream reconnects; a transport failure does not change account state.
         }, () => {
           void readWelcomeState().then(async (value) => {
-            if (!needsWelcome(value) || quitting) return
+            if (!needsWelcome(value) || quitting || activeAccount !== undefined) return
             pendingWelcomeNotice = 'session-expired'
             enteredWorkspace = false
             await showWelcome()
@@ -572,7 +589,17 @@ async function main(): Promise<void> {
 
   const reconcileBackend = (): Promise<void> => {
     startup ??= (async () => {
-      await navigateMain(applicationUrl)
+      if (activeAccount === undefined) {
+        const login = await showAccountLogin()
+        if (quitting) return
+        if (login === undefined) { app.quit(); return }
+        activeAccount = login
+        accountHostEnvironment = { DSH_HOME: login.home.home, DSH_AGENTS_HOME: login.home.agents }
+      }
+      // 切换账号时旧页面必须立即消失；加载页提交前保持隐藏，避免旧账号内容闪现。
+      mainWindow?.hide()
+      await navigateMain(loadingUrl)
+      mainWindow?.show()
       await backend.start(async () => {
         await Promise.all([manager.applyRelease(), prepareHostEnvironment()])
       })
@@ -585,6 +612,33 @@ async function main(): Promise<void> {
       throw error
     }).finally(() => { startup = undefined })
     return startup
+  }
+  let switchingAccount = false
+  /** 退出当前账号、停掉 Host，再回到登录门；切换账号等价于退出后重新登录。 */
+  const switchAccount = async (): Promise<void> => {
+    if (quitting || switchingAccount) return
+    switchingAccount = true
+    try {
+      activeAccount = undefined
+      accountHostEnvironment = {}
+      enteredWorkspace = false
+      navigation = undefined
+      hostUrl = undefined
+      hostCookie = undefined
+      injections = []
+      analyticsEnabled = false
+      stopAccount?.()
+      stopAccount = undefined
+      welcomeBackend = undefined
+      previousAccountStatus = undefined
+      mainWindow?.hide()
+      await backend.stop()
+      await reconcileBackend()
+    } catch (error) {
+      reportFatal(error, 'main')
+    } finally {
+      switchingAccount = false
+    }
   }
 
   const updates = new DesktopUpdateCoordinator(
@@ -777,6 +831,14 @@ async function main(): Promise<void> {
   ipcMain.handle(DESKTOP_IPC.deviceInfo, (event) => {
     assertProductSender(event)
     return readDeviceInfo()
+  })
+  ipcMain.handle(DESKTOP_IPC.acasxAccount, (event) => {
+    assertProductSender(event)
+    return activeAccount?.account ?? null
+  })
+  ipcMain.handle(DESKTOP_IPC.acasxSwitchAccount, (event) => {
+    assertProductSender(event)
+    void switchAccount()
   })
   ipcMain.handle(DESKTOP_IPC.onboardingApiKey, async (event) => {
     assertProductSender(event)
@@ -1142,7 +1204,8 @@ async function main(): Promise<void> {
   }
   let openingWelcome: Promise<void> | undefined
   const showWelcome = (): Promise<void> => {
-    if (quitting) return Promise.resolve()
+    // ACAS.X 使用自己的账号登录门；账号会话或登录窗口存在时不展示上游 welcome。
+    if (quitting || activeAccount !== undefined || openingAccountLogin !== undefined) return Promise.resolve()
     if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) {
       if (!welcomeWindow.isVisible()) void track('auth_page_view', {})
       welcomeWindow.show()
@@ -1209,6 +1272,11 @@ async function main(): Promise<void> {
     locale = resolveDesktopStartupLocale(state.localePreference, systemLanguages)
     windowsLanguage = locale.id
     refreshApplicationMenu()
+    if (activeAccount !== undefined) {
+      // 自定义账号登录已经完成，直接进入系统；上游的 DeepSeek 登录/API Key 引导在此 fork 中不参与产品登录。
+      await enterWorkspace()
+      return
+    }
     if (!enteredWorkspace && needsWelcome({ loggedIn: state.loggedIn, hasApiKey: state.hasApiKey })) {
       // A later login must retain its own activation policy instead of replaying startup focus.
       raiseAfterUpdate = false
@@ -1220,7 +1288,7 @@ async function main(): Promise<void> {
   focusPrimaryWindow = () => {
     if (quitting) return
     if (isMandatory()) { mandatoryUI?.focus(); return }
-    const window = welcomeWindow ?? mainWindow
+    const window = accountLoginWindow ?? welcomeWindow ?? mainWindow
     if (window === undefined || window.isDestroyed()) {
       try { createMainWindow() } catch (error) { reportFatal(error, 'main'); return }
       void (backend.state.phase === 'ready' ? openInitialWindow() : navigateMain(applicationUrl)).catch((error: unknown) => { reportFatal(error, 'main') })
@@ -1254,6 +1322,7 @@ async function main(): Promise<void> {
     backgroundNotice?.dispose()
     tray?.dispose()
     stopAccount?.()
+    if (accountLoginWindow !== undefined && !accountLoginWindow.isDestroyed()) accountLoginWindow.hide()
     if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.hide()
     if (mainWindow !== undefined && !mainWindow.isDestroyed()) mainWindow.hide()
     updateSchedule.dispose()

@@ -12,6 +12,9 @@
       "path": "../../packages/boot/app-boot"
     },
     {
+      "path": "../../packages/client/acasx/tsconfig.host.json"
+    },
+    {
       "path": "../../packages/util/home-paths"
     },
     {

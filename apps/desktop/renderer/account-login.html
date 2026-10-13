@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+    <title>ACAS.X</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body { display: grid; place-items: center; background: #f4f5f7; color: #1f2937; }
+      main { width: min(360px, calc(100vw - 32px)); padding: 28px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+      .eyebrow { margin: 0 0 4px; color: #6b7280; font-size: 13px; }
+      h1 { margin: 0 0 8px; font-size: 24px; }
+      .muted { margin: 0; color: #6b7280; font-size: 14px; line-height: 20px; }
+      form { margin-top: 18px; display: grid; gap: 12px; }
+      label { display: grid; gap: 6px; color: #374151; font-size: 14px; }
+      input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+      button { padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb; color: #111827; font: inherit; cursor: pointer; }
+      button:hover { background: #f3f4f6; }
+      button[type=submit] { border-color: #111827; background: #111827; color: #fff; }
+      button[type=submit]:hover { background: #374151; }
+      button:disabled, input:disabled { opacity: .6; cursor: default; }
+      .error { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; color: #b91c1c; font-size: 14px; }
+      .status { margin: 12px 0 0; color: #166534; font-size: 14px; }
+      .demo { margin-top: 22px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+      .demo-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="heading"></h1>
+      <p class="muted" id="subtitle"></p>
+      <form id="form">
+        <label><span id="usernameLabel"></span><input id="username" name="username" autocomplete="username" required autofocus></label>
+        <label><span id="passwordLabel"></span><input id="password" name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit" id="submit"></button>
+      </form>
+      <p class="error" id="error" hidden></p>
+      <p class="status" id="status" hidden></p>
+      <div class="demo">
+        <p class="muted" id="demoLabel"></p>
+        <div class="demo-actions">
+          <button type="button" data-user="alice" data-password="alice123">Alice / alice123</button>
+          <button type="button" data-user="bob" data-password="bob123">Bob / bob123</button>
+        </div>
+      </div>
+    </main>
+    <script>
+      const zh = {
+        eyebrow: 'ACAS.X 综合智能体',
+        heading: '账号登录',
+        subtitle: '登录成功后进入属于该账号的独立工作区。',
+        username: '用户名',
+        password: '密码',
+        submit: '登录',
+        demo: '演示账号',
+        success: '登录成功，正在进入系统…',
+        invalidInput: '请输入用户名和密码。',
+        invalidCredentials: '用户名或密码不正确。',
+      }
+      const en = {
+        eyebrow: 'ACAS.X Agent',
+        heading: 'Sign in',
+        subtitle: 'Sign in to enter your own workspace.',
+        username: 'Username',
+        password: 'Password',
+        submit: 'Sign in',
+        demo: 'Demo accounts',
+        success: 'Signed in. Entering the system…',
+        invalidInput: 'Enter both a username and a password.',
+        invalidCredentials: 'The username or password is incorrect.',
+      }
+      const copy = navigator.language.toLowerCase().startsWith('zh') ? zh : en
+      document.documentElement.lang = copy === zh ? 'zh-CN' : 'en'
+      document.getElementById('eyebrow').textContent = copy.eyebrow
+      document.getElementById('heading').textContent = copy.heading
+      document.getElementById('subtitle').textContent = copy.subtitle
+      document.getElementById('usernameLabel').textContent = copy.username
+      document.getElementById('passwordLabel').textContent = copy.password
+      document.getElementById('demoLabel').textContent = copy.demo
+      const submit = document.getElementById('submit')
+      submit.textContent = copy.submit
+      const form = document.getElementById('form')
+      const error = document.getElementById('error')
+      const status = document.getElementById('status')
+      for (const button of document.querySelectorAll('[data-user]')) {
+        button.addEventListener('click', () => {
+          document.getElementById('username').value = button.dataset.user
+          document.getElementById('password').value = button.dataset.password
+        })
+      }
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        error.hidden = true
+        status.hidden = true
+        submit.disabled = true
+        const result = await window.acasxLogin.submit(document.getElementById('username').value, document.getElementById('password').value)
+        if (result.ok) {
+          for (const field of form.elements) field.disabled = true
+          status.textContent = copy.success
+          status.hidden = false
+          return
+        }
+        submit.disabled = false
+        error.textContent = result.code === 'invalid-input' ? copy.invalidInput : copy.invalidCredentials
+        error.hidden = false
+      })
+    </script>
+  </body>
+</html>

@@ -5,7 +5,7 @@
     "outDir": "lib/types",
     "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
   },
-  "files": ["src/index.ts", "src/types.ts"],
+  "files": ["src/account.ts", "src/index.ts", "src/types.ts"],
   "references": [
     {
       "path": "../../../vendor/cordis"
@@ -15,6 +15,9 @@
     },
     {
       "path": "../../util/home-paths"
+    },
+    {
+      "path": "../../workspace/workspace"
     }
   ]
 }
