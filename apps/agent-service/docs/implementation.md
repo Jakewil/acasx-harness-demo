@@ -81,6 +81,93 @@ dsh SDK 子进程（dsh --profile sdk + patches/restricted.cordis.yml）
 | `docs/config-catalog.md` / `.zh.md` | 重新生成的配置目录；本次同时修正了上游分支遗留的 ACAS.X 服务列表新鲜度问题。 |
 | `pnpm-lock.yaml` | 记录新工作区包、依赖链接和 CLI 依赖。 |
 
+## package.json 说明
+
+`apps/agent-service/package.json` 同时声明两件事：它是一个普通 Node 应用包，也是一个 dsh profile bundle。前者决定编译、运行和发布，后者由 `dsh.bundle.patch` 声明，决定 `dsh --profile agent-service` 能否加载它。
+
+### 关键字段
+
+| 字段 | 值 | 作用 |
+|---|---|---|
+| `name` | `@deepseek-ai/dsh-agent-service` | 包名；也是 `cordis.patch.yml` 中两个 row 的 `name`。 |
+| `main` / `types` | `lib/index.js` / `lib/types/index.d.ts` | 默认入口，导出网关 Cordis 插件。 |
+| `exports["."]` | `./lib/index.js` | 让 dsh loader 能按包名加载网关插件。 |
+| `exports["./startup"]` | `./lib/startup.js` | 让 profile 用 `@deepseek-ai/dsh-agent-service/startup` 单独加载命令行启动行。 |
+| `dsh.bundle.patch` | `./cordis.patch.yml` | 声明这是 dsh bundle；profile 初始化时据此应用 patch。 |
+| `files` | `lib`、`cordis.patch.yml`、`public`、`patches` | 发布时必须携带运行时代码、profile patch、Web 页面和子运行时 patch。 |
+| `publishConfig` | `access: public` | 允许发布；`apps/cli` 依赖这个包，因此它不能是私有包。 |
+| `type` | `module` | 全 ESM，符合仓库约定。 |
+
+### 依赖总览
+
+| 依赖 | 声明 | 使用位置 | 作用 |
+|---|---|---|---|
+| `@deepseek-ai/dsh-sdk-client` | `dependencies` | `src/runtime.ts`、`src/gateway.ts` | Node/TypeScript 的 dsh SDK：启动并驱动 `dsh --profile sdk` 子进程，提供协议客户端和类型化错误。 |
+| `@deepseek-ai/dsh-cmdline` | `dependencies` | `src/startup.ts` | 解析应用自己的命令行、`--help` 和退出请求；成功解析后才发布启动服务。 |
+| `@deepseek-ai/schemastery` | `dependencies` | `src/index.ts`、`src/startup.ts` | 定义并校验插件 Config；加载 profile 时检查字段类型和必填项。 |
+| `commander` | `dependencies` | `src/startup.ts` | 构造命令行程序、参数定义和帮助文本。 |
+| `@deepseek-ai/cordis` | `peerDependencies` + `devDependencies` | `src/index.ts`、`src/startup.ts` | 插件运行时和服务容器；运行时由 dsh 宿主提供，开发时用于类型检查和构建。 |
+
+### `@deepseek-ai/dsh-sdk-client`
+
+这是“把 dsh 当后台 agent 引擎”的核心依赖。它提供两个层次：
+
+```text
+DeepSeekHarness   高层运行封装：运行一次任务并等待 agent 进入 idle
+HarnessClient     低层协议客户端：长连接、prompt、subscribe、request
+```
+
+本应用使用 `HarnessClient`，因为一个网关进程要在同一条连接上同时服务多个用户会话；`DeepSeekHarness.run()` 以一次运行区间为中心，不适合这种多路复用。`src/runtime.ts` 用它完成三件事：
+
+1. 启动子进程：按配置传入 `profile: 'sdk'`、`patches`（受限 patch）、`dshHome`、`processCwd` 和 `initializeTimeoutMs`。
+2. 协议调用：`initialize` 完成进程级握手和模型路由校验；`setWorkingDirectory()` 为每个网关会话准备独立的 dsh 会话；`prompt()` 把用户消息入队。
+3. 通知订阅：`subscribe()` 返回异步订阅，网关持续读取 `session.event`、`session.status` 和 `subagent.*`，再路由到对应会话。
+
+`src/gateway.ts` 还使用它导出的 `TransportClosedError` 和 `RequestTimeoutError`，只为“子进程消失或启动超时”做一次有界重试；协议错误和配置错误直接返回给调用方，不重试。
+
+这个包不提供 HTTP 服务。HTTP、SSE、登录、会话归属和页面跳转都由 `src/gateway.ts` 实现，SDK 只负责与 dsh 子进程通信。
+
+SDK 自身依赖同版本的 `@deepseek-ai/dsh`，并负责解析和启动该 dsh 可执行文件，所以本应用不需要直接声明 `@deepseek-ai/dsh`。两边版本必须一致：工作区内由 `workspace:*` 保持同版，发布后由 SDK 的精确版本依赖保证。
+
+### `@deepseek-ai/dsh-cmdline`
+
+因为 `agent-service` 本身是 dsh profile，用户执行的是 `dsh --profile agent-service`，应用需要自己处理剩余参数。`src/startup.ts` 调用 `parseCmdline(ctx, program)`，实现两种互斥结果：
+
+```text
+dsh --profile agent-service --help   打印帮助并退出，不绑定端口
+dsh --profile agent-service          发布 agentServiceStartup，网关行开始监听
+```
+
+网关行的 `inject: [agentServiceStartup]` 让它只在解析成功后激活。没有这个依赖，`--help` 会被当成正常启动，服务器会错误地占用端口。
+
+### `@deepseek-ai/schemastery`
+
+`schemastery` 是 dsh 的配置 schema 库。`src/index.ts` 和 `src/startup.ts` 都用它声明 `Config`：
+
+```ts
+export const Config: z<Config> = z.object({
+  host: z.string(),
+  port: z.number(),
+  users: z.array(z.object({ username: z.string(), password: z.string(), displayName: z.string() })),
+})
+```
+
+加载 `cordis.patch.yml` 时，loader 用这个 schema 校验配置。字段类型错误、数组元素缺字段等问题会在启动阶段失败，而不是运行到某个请求时才暴露。
+
+### `commander`
+
+`src/startup.ts` 用 `commander` 的 `Command` 定义应用名、描述、`-h, --help` 和 action。`dsh-cmdline` 负责把 dsh 剩余参数交给这个程序并处理成功、帮助和拒绝三种出口。它只影响命令行，不参与浏览器和 HTTP 逻辑。
+
+### `@deepseek-ai/cordis`
+
+本应用是一个 Cordis 插件，需要 `Context`、`ctx.effect()`、`ctx.logger`、`ctx.provide()` 和插件注入机制。Cordis 容器由 dsh 宿主进程提供，因此它声明为 `peerDependencies`，避免在自己的依赖树中再装一份 Cordis 造成服务注册分裂。`devDependencies` 中的同一项只为本仓库的类型检查、测试和打包提供类型来源。
+
+### 版本写法与未声明的依赖
+
+`workspace:*` 表示使用工作区中的同一个包，DSH 系列依赖都用它保持同版；`workspace:~` 用于 vendor 提供的 `@deepseek-ai/cordis`；`commander` 使用普通 npm 范围 `^15.0.0`。
+
+以下内容刻意不写进依赖：`node:http`、`node:fs`、`node:crypto`、`node:path` 等是 Node 内置模块；实时推送使用 HTTP 上的 SSE，不需要 `ws`；页面是原生 ESM 和 DOM，不需要 React 或构建框架。
+
 ## 需求覆盖情况
 
 | 需求 | 结论 | 说明 |
