@@ -227,6 +227,25 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  apps/agent-service:
+    dependencies:
+      '@deepseek-ai/dsh-cmdline':
+        specifier: workspace:*
+        version: link:../../packages/boot/cmdline
+      '@deepseek-ai/dsh-sdk-client':
+        specifier: workspace:*
+        version: link:../../packages/sdk/client
+      '@deepseek-ai/schemastery':
+        specifier: link:../../vendor/schemastery
+        version: link:../../vendor/schemastery
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../vendor/cordis
+
   apps/cli:
     dependencies:
       '@deepseek-ai/cordis':
@@ -250,6 +269,9 @@ importers:
       '@deepseek-ai/dsh-agent-preset':
         specifier: workspace:*
         version: link:../../packages/preset/agent-preset
+      '@deepseek-ai/dsh-agent-service':
+        specifier: workspace:*
+        version: link:../agent-service
       '@deepseek-ai/dsh-agent-tool-presentation':
         specifier: workspace:*
         version: link:../../packages/core/agent-tool-presentation

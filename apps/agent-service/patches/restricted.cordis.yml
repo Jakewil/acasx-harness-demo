@@ -1,0 +1,38 @@
+# Restrict the agent-service child runtime to read-only analysis.
+#
+# The gateway is the only writer of a session workspace: it seeds the case
+# material before the agent starts. The agent may inspect that material, but it
+# cannot change files, reach the network, or ask for interactive approval.
+
+- id: sandbox-policy
+  config:
+    mode: read-only
+    workspaceRoot: !!js process.cwd()
+
+- id: approval
+  config:
+    policy: never
+
+# Network egress stays out of the analysis runtime.
+- id: web
+  disabled: true
+- id: web-search-deepseek
+  disabled: true
+- id: web-fetch-http
+  disabled: true
+- id: tool-web
+  disabled: true
+
+# Delegated agents would add process surface without helping this demo.
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-list-agents
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+
+# The runtime owns no skill assets; keep the tool roster minimal.
+- id: tool-skill
+  disabled: true

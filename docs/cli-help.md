@@ -12,6 +12,7 @@ Run `pnpm run gen-cli-help` to regenerate; run `pnpm run verify-cli-help` to che
 - [`dsh`](#dsh)
 - [`dsh plugin`](#dsh-plugin)
 - [`dsh acp`](#dsh-acp)
+- [`dsh agent-service`](#dsh-agent-service)
 - [`dsh headless`](#dsh-headless)
 - [`dsh sdk`](#dsh-sdk)
 - [`dsh sdk-minimal`](#dsh-sdk-minimal)
@@ -94,6 +95,24 @@ Options:
 
 Example:
   dsh --profile acp     serve ACP until the client disconnects
+
+```
+
+<a id="dsh-agent-service"></a>
+## `dsh agent-service`
+
+Invocations: `dsh agent-service --help`, `dsh --profile agent-service --help`
+
+```text
+Usage: dsh --profile agent-service [options]
+
+Serve the per-user analysis console and drive one DeepSeek Harness SDK runtime.
+
+Options:
+  -h, --help  show this help
+
+Example:
+  dsh --profile agent-service     serve the analysis console until the process stops
 
 ```
 

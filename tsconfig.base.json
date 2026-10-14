@@ -321,6 +321,8 @@
       // below cannot map them; these three stay hand-written.
       "@deepseek-ai/dsh-sdk-client": ["./packages/sdk/client/src"],
       "@deepseek-ai/dsh-sdk-protocol": ["./packages/sdk/protocol/src"],
+      "@deepseek-ai/dsh-agent-service": ["./apps/agent-service/src/index.ts"],
+      "@deepseek-ai/dsh-agent-service/startup": ["./apps/agent-service/src/startup.ts"],
       "@deepseek-ai/dsh-sdk-jsonrpc-server": ["./packages/sdk/server/src"],
       "@deepseek-ai/dsh-experimental-agent-team": ["./packages/experimental/agent-team/src"],
       "@deepseek-ai/dsh-experimental-auto-review": ["./packages/experimental/auto-review/src"],

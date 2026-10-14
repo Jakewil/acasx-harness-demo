@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 | 狱情分析智能体</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <section class="login-view">
+      <form id="login-form" class="login-card">
+        <h1>狱情分析智能体</h1>
+        <p class="login-note">登录后仅能看到本账号的分析会话。</p>
+        <label>
+          <span>账号</span>
+          <input id="login-username" name="username" autocomplete="username" value="analyst" required>
+        </label>
+        <label>
+          <span>密码</span>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" value="analyst" required>
+        </label>
+        <p id="login-error" class="login-error" hidden></p>
+        <button type="submit" class="primary-button">登录</button>
+      </form>
+    </section>
+    <script type="module" src="/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+# The agent-service application bundle: one Node gateway row.
+#
+# The gateway is the only component that reaches the dsh SDK runtime. Browsers
+# authenticate against the gateway and never see a dsh session id, profile, or
+# process. Deployment-varying values stay here so a profile patch can change
+# them without editing code.
+- insert:
+    - id: agent-service-startup
+      name: '@deepseek-ai/dsh-agent-service/startup'
+      config:
+        profile: agent-service
+
+    - id: agent-service
+      name: '@deepseek-ai/dsh-agent-service'
+      inject: [agentServiceStartup]
+      config:
+        host: 127.0.0.1
+        port: 8790
+        dataDir: !!js process.env.DSH_AGENT_SERVICE_DATA ?? './.dsh-agent-service'
+        runtimeProfile: sdk
+        provider: deepseek-official
+        model: deepseek-v4-flash
+        users:
+          - username: analyst
+            password: analyst
+            displayName: 分析员
+          - username: auditor
+            password: auditor
+            displayName: 审核员

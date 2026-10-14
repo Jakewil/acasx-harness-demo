@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>狱情分析工作台</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <section class="app-view">
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <div>
+            <strong>狱情分析</strong>
+            <span id="current-user" class="subtle"></span>
+          </div>
+          <button id="logout-button" class="icon-button" type="button" title="退出登录" aria-label="退出登录">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+          </button>
+        </header>
+        <button id="new-session-button" class="new-session" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          新建分析
+        </button>
+        <nav id="session-list" class="session-list" aria-label="分析会话"></nav>
+      </aside>
+
+      <main class="main">
+        <header class="main-header">
+          <div>
+            <h1 id="session-title">选择一个分析会话</h1>
+            <span id="session-status" class="status-pill" data-status="idle">空闲</span>
+          </div>
+        </header>
+        <section id="message-list" class="message-list" aria-live="polite"></section>
+        <form id="composer" class="composer">
+          <textarea id="composer-input" rows="2" placeholder="描述要分析的问题，例如：请分析当前案情材料并给出风险结论" disabled></textarea>
+          <button id="send-button" class="send-button" type="submit" disabled title="发送" aria-label="发送">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-7-4 14-3-6-7-1Z"/></svg>
+          </button>
+        </form>
+      </main>
+    </section>
+    <script type="module" src="/console.js"></script>
+  </body>
+</html>
